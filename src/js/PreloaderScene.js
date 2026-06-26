@@ -9,6 +9,10 @@ import coverA from "../img/covers/Anime.png";
 import coverB from "../img/covers/Animals.png";
 import coverC from "../img/covers/Fantasy.png";
 import coverD from "../img/covers/Mandalas.png";
+import labelA from "../img/covers/Label_Anime.png";
+import labelB from "../img/covers/Label_Animals.png";
+import labelC from "../img/covers/Label_Fantasy.png";
+import labelD from "../img/covers/Label_Mandalas.png";
 
 // SVG
 import levelA from "../img/levels/Anime.svg";
@@ -47,7 +51,11 @@ export default class Preloader {
             .add("coverA", coverA)
             .add("coverB", coverB)
             .add("coverC", coverC)
-            .add("coverD", coverD);
+            .add("coverD", coverD)
+            .add("labelA", labelA)
+            .add("labelB", labelB)
+            .add("labelC", labelC)
+            .add("labelD", labelD);
     }
 
     loadSVG() {
