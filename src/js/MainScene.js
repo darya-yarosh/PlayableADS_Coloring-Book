@@ -78,34 +78,90 @@ export default class Main {
         const isVertical = true;
 
         const wrap = new PIXI.Container();
+        wrap.name = "levelsList";
 
-        for(let index = 0; index < LEVEL_COUNT; index++) {
-            let startGap = 0;
-            let cellWidth = 0;
-            let cellHeight = 0;
-            let x = 0;
-            let y = 0;
-            let gap = 0;
+        let gap = 20;
+        let startGap = isVertical ? 200 : 100;
 
-            const isEven = index % 2 === 0;
-            if (isVertical) {
-                startGap = 100;
-                gap = 20;
-                cellWidth = (app.screen.width - (gap * 3))/ 2;
-                cellHeight = cellWidth;
-                x = isEven ? app.screen.width - gap - cellWidth : gap;
-                const row = Math.round((index+1) / 2) - 1;
-                
-                y = startGap + row * (gap + cellHeight)
-            } else {
-                
-            }
+        const rows = isVertical ? 2 : 1;
+        const columns = isVertical ? 2 : 4;
+        const spiralledLevels = this.drawSpiralLevelsList(rows, columns, LEVELS);
+        const cellWidth = isVertical ? (app.screen.width - (gap * 3)) / 2 : (app.screen.width - (gap * 5)) / 4;
+        const cellHeight = cellWidth;
+
+        spiralledLevels.forEach((level, index) => {
+            const {
+                row,
+                col,
+                data
+            } = level;
+            const x = col * (gap + cellWidth) + gap;
+            const y = row * (gap + cellHeight) + startGap;
             
-            const cell = this.createLevelCell(x, y, LEVELS[index].cover, LEVELS[index].label, cellWidth, cellHeight);
+            console.log(x, y, col, gap, cellWidth);
+            const cell = this.createLevelCell(x, y, data.cover, data.label, cellWidth, cellHeight);
             wrap.addChild(cell);
-        }
+        })
+
 
         app.stage.addChild(wrap);
+    }
+
+    drawSpiralLevelsList(rows, cols, cellData) {
+        const cells = [];
+        let top = 0;
+        let bottom = rows - 1;
+        let left = 0;
+        let right = cols - 1;
+        let index = 0;
+        
+        while (top <= bottom && left <= right) {
+            // Верхняя строка (слева → направо)
+            for (let i = left; i <= right; i++) {
+                cells.push({
+                    row: top,
+                    col: i,
+                    data: cellData[index++]
+                });
+            }
+            top++;
+            
+            // Правый столбец (сверху → вниз)
+            for (let i = top; i <= bottom; i++) {
+                cells.push({
+                    row: i,
+                    col: right,
+                    data: cellData[index++]
+                });
+            }
+            right--;
+            
+            // Нижняя строка (справа → налево)
+            if (top <= bottom) {
+                for (let i = right; i >= left; i--) {
+                    cells.push({
+                        row: bottom,
+                        col: i,
+                        data: cellData[index++]
+                    });
+                }
+                bottom--;
+            }
+            
+            // Левый столбец (снизу → вверх)
+            if (left <= right) {
+                for (let i = bottom; i >= top; i--) {
+                    cells.push({
+                        row: i,
+                        col: left,
+                        data: cellData[index++]
+                    });
+                }
+                left++;
+            }
+        }
+        
+        return cells;
     }
 
     drawHand() {
