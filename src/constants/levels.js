@@ -19,7 +19,9 @@ export const LEVELS = [
         level: "levelD",
         label: "labelD",
     },
-]
+];
+
+export const LEVEL_COUNT = LEVELS.length;
 
 // const cellType = [
 //     app.svgTextures?.typeA,

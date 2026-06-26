@@ -5,6 +5,8 @@ import { Sprite } from '@pixi/sprite';
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
 
+import { LEVEL_COUNT, LEVELS } from '../constants/levels';
+
 let app;
 let music;
 
@@ -12,11 +14,8 @@ export default class Main {
     constructor (application) {
         app = application;
     }
-    
-    startGame() {
-        console.log('%c  %c MainScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
 
-        // -> Header
+    drawHeader() {
         const headerText = new PIXI.Text("Choose category", {
             fontFamily: 'Poppins',
             fontSize: 24, fill : 0xff1010, align : 'center'
@@ -25,61 +24,45 @@ export default class Main {
         headerText.x = app.screen.width / 2;
         headerText.y = 0 + 40 + headerText.height / 2;
         app.stage.addChild(headerText);
-        // Header <-
+    }
 
-        // -> Cell
-        // const cellType = [
-        //     app.svgTextures?.typeA,
-        //     app.svgTextures?.typeB,
-        //     app.svgTextures?.typeC,
-        //     app.svgTextures?.typeD,
-        // ];
+    createLevelCell(x, y, texture, width, height) {
+        const wrap = new PIXI.Container();
+        const wrapSprite = PIXI.Sprite.from('cell');
+        wrapSprite.width = width;
+        wrapSprite.height = height;
+        wrapSprite.x = 0;
+        wrapSprite.y = 0;
 
-        const cellType = [
-            "coverA",
-            "coverB",
-            "coverC",
-            "coverD",
-        ];
-        
-        const createCell = (x, y, texture, width, height) => {
-            const wrap = new PIXI.Container();
-            const wrapSprite = PIXI.Sprite.from('cell');
-            wrapSprite.width = width; // Твой размер ячейки
-            wrapSprite.height = height;
-            wrapSprite.x = 0;
-            wrapSprite.y = 0;
+        const maskSprite = PIXI.Sprite.from('cell');
+        maskSprite.width = width;
+        maskSprite.height = height;
+        maskSprite.x = 0;
+        maskSprite.y = 0;
 
-            const maskSprite = PIXI.Sprite.from('cell');
-            maskSprite.width = width; // Твой размер ячейки
-            maskSprite.height = height;
-            maskSprite.x = 0;
-            maskSprite.y = 0;
+        const innerSprite = PIXI.Sprite.from(texture);
+        innerSprite.width = width;
+        innerSprite.height = height;
+        innerSprite.x = 0;
+        innerSprite.y = 0;
 
-            const innerSprite = PIXI.Sprite.from(texture);
-            innerSprite.width = width;
-            innerSprite.height = height;
-            innerSprite.x = 0;
-            innerSprite.y = 0;
-            innerSprite.mask = maskSprite;
+        innerSprite.mask = maskSprite;
 
-            wrap.addChild(wrapSprite);
-            wrap.addChild(innerSprite);
-            wrap.addChild(maskSprite); 
+        wrap.addChild(wrapSprite);
+        wrap.addChild(innerSprite);
+        wrap.addChild(maskSprite); 
 
-            wrap.x = x;
-            wrap.y = y;
+        wrap.x = x;
+        wrap.y = y;
 
-            return wrap;
-        }
-        // Cell <-
-
-        // -> CellMap
-        const LEVEL_COUNT = 4;
-
-        const cells = [];
-
+        return wrap;
+    }
+    
+    drawLevelsList() {
         const isVertical = true;
+
+        const wrap = new PIXI.Container();
+
         for(let index = 0; index < LEVEL_COUNT; index++) {
             let startGap = 0;
             let cellWidth = 0;
@@ -102,15 +85,14 @@ export default class Main {
                 
             }
             
-            const cell = createCell(x, y, cellType[index], cellWidth, cellHeight);
-            
-            cells.push(cell);
-
-            app.stage.addChild(cell);
+            const cell = this.createLevelCell(x, y, LEVELS[index].cover, cellWidth, cellHeight);
+            wrap.addChild(cell);
         }
-        // CellMap <-
 
-        // -> Hand
+        app.stage.addChild(wrap);
+    }
+
+    drawHand() {
         const hand = Sprite.from('hand')
         hand.anchor.set(0.5) 
         app.stage.addChild(hand)
@@ -122,18 +104,24 @@ export default class Main {
         gsap.to(hand.scale, {
             x: 0.6, y: 0.6, duration: 0.5, repeat: -1, yoyo: true, ease: 'Quad.InOut'
         })
-        // Hand <-
+    }
 
-        // -> Footer
+    drawFooter() {
         const footerText = new PIXI.Text("Happy Color", {fontFamily: 'Poppins'});
         footerText.anchor.set(0.5, 0.5);
         footerText.x = app.screen.width / 2;
         footerText.y = app.screen.height - 40 - footerText.height / 2;
         app.stage.addChild(footerText);
-        // Footer <-
+    }
 
-        // -> Sound
+    startGame() {
+        console.log('%c  %c MainScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
+
+        this.drawHeader();
+        this.drawLevelsList();
+        this.drawHand();
+        this.drawFooter();
+
         // music =  sound.play('sound_fx');
-        // Sound <-
     }
 }
