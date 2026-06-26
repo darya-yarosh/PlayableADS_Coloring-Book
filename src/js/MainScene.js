@@ -31,7 +31,7 @@ export default class Main {
         app.stage.addChild(headerText);
     }
 
-    createLevelCell(x, y, texture, width, height) {
+    createLevelCell(x, y, texture, label, width, height) {
         const wrap = new PIXI.Container();
         const wrapSprite = PIXI.Sprite.from('cell');
         wrapSprite.width = width;
@@ -53,9 +53,20 @@ export default class Main {
 
         innerSprite.mask = maskSprite;
 
+        const labelSprite = PIXI.Sprite.from(label);
+        const difference = labelSprite.width < width / 2 
+            ? labelSprite.width * 1 / (width / 2)
+            : (width / 2) * 1 / labelSprite.width;
+
+        labelSprite.scale.set(difference, difference);
+        labelSprite.x = width - labelSprite.width - 10;
+        labelSprite.y = height - labelSprite.height - 10;
+        labelSprite.mask = maskSprite;
+
         wrap.addChild(wrapSprite);
         wrap.addChild(innerSprite);
         wrap.addChild(maskSprite); 
+        wrap.addChild(labelSprite); 
 
         wrap.x = x;
         wrap.y = y;
@@ -90,7 +101,7 @@ export default class Main {
                 
             }
             
-            const cell = this.createLevelCell(x, y, LEVELS[index].cover, cellWidth, cellHeight);
+            const cell = this.createLevelCell(x, y, LEVELS[index].cover, LEVELS[index].label, cellWidth, cellHeight);
             wrap.addChild(cell);
         }
 
