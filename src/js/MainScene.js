@@ -18,7 +18,12 @@ export default class Main {
     drawHeader() {
         const headerText = new PIXI.Text("Choose category", {
             fontFamily: 'Poppins',
-            fontSize: 24, fill : 0xff1010, align : 'center'
+            fontSize: 48,
+            fontWeight: 600,
+            fill: 0x3a3a3a, 
+            align : 'center',
+            wordWrap: true,
+            wordWrapWidth: 200,
         });
         headerText.anchor.set(0.5, 0.5);
         headerText.x = app.screen.width / 2;
@@ -107,10 +112,18 @@ export default class Main {
     }
 
     drawFooter() {
-        const footerText = new PIXI.Text("Happy Color", {fontFamily: 'Poppins'});
+        const footerText = new PIXI.Text(
+            "Happy Color", 
+            {
+                fontFamily: 'Poppins',
+                fill: 0x000000,
+                fontWeight: 600,
+                fontSize: 36,
+            }
+        );
         footerText.anchor.set(0.5, 0.5);
         footerText.x = app.screen.width / 2;
-        footerText.y = app.screen.height - 40 - footerText.height / 2;
+        footerText.y = app.screen.height - 80 - footerText.height / 2;
         app.stage.addChild(footerText);
     }
 
