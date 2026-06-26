@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@pixi/app": "^6.3.2",
+    "@pixi/assets": "^6.0.0",
     "@pixi/constants": "^6.3.2",
     "@pixi/core": "^6.3.2",
     "@pixi/display": "^6.3.2",
