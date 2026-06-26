@@ -19,6 +19,9 @@ export default class Preloader {
         
         sound
             .add('sound_fx', sound_fxA)
+    async startLoad() {
+        console.log('%c  %c PreloaderScene ', 'background:#d6cc28','color: #d6cc28; background: #000; font-size:10pt')
+
         try {
             const font = new FontFace('Poppins', fontUrl);
             await font.load();

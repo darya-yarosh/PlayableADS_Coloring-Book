@@ -6,7 +6,7 @@ import { PixiPlugin } from "gsap/PixiPlugin";
 import Preloader from "./js/PreloaderScene.js"
 import Main from './js/MainScene.js';
 
-const size = [960, 540]
+const size = [540, 960]
 
 Application.registerPlugin(AppLoaderPlugin);
 
@@ -14,17 +14,17 @@ const app = new Application({
     width: size[0],
     height: size[1],
     resolution: window.devicePixelRatio,
-    backgroundColor: 0x111111
+    backgroundColor: 0xEDE8E5
 })
 let ratio = size[0] / size[1]
-// let renderer = PIXI.autoDetectRenderer(size[0], size[1], null)
+let renderer = PIXI.autoDetectRenderer(size[0], size[1], null)
 document.body.appendChild(app.view)
 resize()
 
 gsap.registerPlugin(PixiPlugin)
 
 
-const prld = new Preloader(app).startLoad()
+const prld = await new Preloader(app).startLoad()
 
 const game = new Main(app)
 
