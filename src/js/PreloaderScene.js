@@ -10,7 +10,11 @@ import coverB from "../img/covers/Animals.png";
 import coverC from "../img/covers/Fantasy.png";
 import coverD from "../img/covers/Mandalas.png";
 
-import logoI from '../img/logo.png';
+// SVG
+import levelA from "../img/levels/Anime.svg";
+import levelB from "../img/levels/Animals.svg";
+import levelC from "../img/levels/Fantasy.svg";
+import levelD from "../img/levels/Mandalas.svg";
 
 // Sound
 import sound_fxA from "../audio/sound_fx.mp3";
@@ -46,6 +50,29 @@ export default class Preloader {
             .add("coverD", coverD);
     }
 
+    loadSVG() {
+        const svgTextures = {
+            typeA: PIXI.Texture.from(typeA, {
+                width: 650,
+                height: 650
+            }),
+            typeB: PIXI.Texture.from(typeB, {
+                width: 650,
+                height: 650
+            }),
+            typeC: PIXI.Texture.from(typeC, {
+                width: 650,
+                height: 650
+            }),
+            typeD: PIXI.Texture.from(typeD, {
+                width: 650,
+                height: 650
+            }),
+        };
+
+        app.svgTextures = svgTextures
+    }
+
     loadSound() {
         sound
             .add('sound_fx', sound_fxA)
@@ -66,6 +93,8 @@ export default class Preloader {
         this.loadPNG();
         
         await this.loadFont();
+
+        //this.loadSVG();
 
         //this.loadSound();
 
