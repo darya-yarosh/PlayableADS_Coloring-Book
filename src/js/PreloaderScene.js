@@ -1,8 +1,8 @@
-import * as PIXI from 'pixi.js'
-import { sound } from '@pixi/sound';
-
+import * as PIXI from "pixi.js"
+import { sound } from "@pixi/sound";
 import logoI from '../img/logo.png';
-import sound_fxA from '../audio/sound_fx.mp3';
+import sound_fxA from "../audio/sound_fx.mp3";
+import { fontUrl } from "../constants/font";
 
 let app;
 
@@ -19,6 +19,17 @@ export default class Preloader {
         
         sound
             .add('sound_fx', sound_fxA)
+        try {
+            const font = new FontFace('Poppins', fontUrl);
+            await font.load();
+            document.fonts.add(font);
+            console.log('✅ Шрифт Poppins загружен');
+        } catch (e) {
+            console.warn('⚠️ Ошибка загрузки шрифта:', e);
+        }
+        return new Promise((resolve) => {
+            resolve();
+        });
 
     }
 }
