@@ -27,6 +27,19 @@ export default class Main {
         app.stage.addChild(headerText);
         // Header <-
 
+        // -> Hand
+        const hand = Sprite.from('hand')
+        hand.anchor.set(0.5) 
+        app.stage.addChild(hand)
+
+        hand.x = app.screen.width * 0.65
+        hand.y = app.screen.height * 0.65
+        hand.scale.set(0.5);
+
+        gsap.to(hand.scale, {
+            x: 0.6, y: 0.6, duration: 0.5, repeat: -1, yoyo: true, ease: 'Quad.InOut'
+        })
+        // Hand <-
 
         // -> Footer
         const footerText = new PIXI.Text("Happy Color", {fontFamily: 'Poppins'});
