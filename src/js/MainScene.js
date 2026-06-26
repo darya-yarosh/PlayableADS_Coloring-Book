@@ -27,6 +27,89 @@ export default class Main {
         app.stage.addChild(headerText);
         // Header <-
 
+        // -> Cell
+        // const cellType = [
+        //     app.svgTextures?.typeA,
+        //     app.svgTextures?.typeB,
+        //     app.svgTextures?.typeC,
+        //     app.svgTextures?.typeD,
+        // ];
+
+        const cellType = [
+            "coverA",
+            "coverB",
+            "coverC",
+            "coverD",
+        ];
+        
+        const createCell = (x, y, texture, width, height) => {
+            const wrap = new PIXI.Container();
+            const wrapSprite = PIXI.Sprite.from('cell');
+            wrapSprite.width = width; // Твой размер ячейки
+            wrapSprite.height = height;
+            wrapSprite.x = 0;
+            wrapSprite.y = 0;
+
+            const maskSprite = PIXI.Sprite.from('cell');
+            maskSprite.width = width; // Твой размер ячейки
+            maskSprite.height = height;
+            maskSprite.x = 0;
+            maskSprite.y = 0;
+
+            const innerSprite = PIXI.Sprite.from(texture);
+            innerSprite.width = width;
+            innerSprite.height = height;
+            innerSprite.x = 0;
+            innerSprite.y = 0;
+            innerSprite.mask = maskSprite;
+
+            wrap.addChild(wrapSprite);
+            wrap.addChild(innerSprite);
+            wrap.addChild(maskSprite); 
+
+            wrap.x = x;
+            wrap.y = y;
+
+            return wrap;
+        }
+        // Cell <-
+
+        // -> CellMap
+        const LEVEL_COUNT = 4;
+
+        const cells = [];
+
+        const isVertical = true;
+        for(let index = 0; index < LEVEL_COUNT; index++) {
+            let startGap = 0;
+            let cellWidth = 0;
+            let cellHeight = 0;
+            let x = 0;
+            let y = 0;
+            let gap = 0;
+
+            const isEven = index % 2 === 0;
+            if (isVertical) {
+                startGap = 100;
+                gap = 20;
+                cellWidth = (app.screen.width - (gap * 3))/ 2;
+                cellHeight = cellWidth;
+                x = isEven ? app.screen.width - gap - cellWidth : gap;
+                const row = Math.round((index+1) / 2) - 1;
+                
+                y = startGap + row * (gap + cellHeight)
+            } else {
+                
+            }
+            
+            const cell = createCell(x, y, cellType[index], cellWidth, cellHeight);
+            
+            cells.push(cell);
+
+            app.stage.addChild(cell);
+        }
+        // CellMap <-
+
         // -> Hand
         const hand = Sprite.from('hand')
         hand.anchor.set(0.5) 
