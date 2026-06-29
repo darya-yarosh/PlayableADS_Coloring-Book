@@ -178,17 +178,46 @@ export default class Main {
     }
 
     drawHand() {
-        const hand = Sprite.from('hand')
-        hand.anchor.set(0.5) 
+        const hand = Sprite.from('hand');
         app.stage.addChild(hand)
-
-        hand.x = app.screen.width * 0.65
-        hand.y = app.screen.height * 0.65
-        hand.scale.set(0.5);
-
+        
+        hand.scale.set(0.3);
+        
+        const durationPerCell = 0.8;
         gsap.to(hand.scale, {
-            x: 0.6, y: 0.6, duration: 0.5, repeat: -1, yoyo: true, ease: 'Quad.InOut'
+            x: 0.2, y: 0.2, duration: (durationPerCell + 0.3) / 2, repeat: -1, yoyo: true, ease: 'Quad.InOut',
         })
+
+        const cellsWrapper = app.stage.children.find(c => c.name === "levelsList");
+        const cells = cellsWrapper?.children ?? [];
+
+        let currentIndex = 0;
+
+        const moveToNextCell = () => {
+            const cell = cells[currentIndex];
+            const targetX = cell.x + cell.width / 2;
+            const targetY = cell.y + cell.height / 2;
+
+            gsap.to(hand, {
+                x: targetX,
+                y: targetY,
+                duration: durationPerCell,
+                ease: 'Quad.InOut',
+                onComplete: () => {
+                    currentIndex = (currentIndex + 1) % cells.length;
+                    setTimeout(moveToNextCell, 300); 
+                }
+            });
+        };
+
+        const firstCell = cells[0];
+        hand.x = firstCell.x + firstCell.width / 2;
+        hand.y = firstCell.y + firstCell.height / 2;
+
+        setTimeout(() => {
+            currentIndex = 1;
+            setTimeout(moveToNextCell, 300);
+        }, 0);
     }
 
     drawFooter() {
