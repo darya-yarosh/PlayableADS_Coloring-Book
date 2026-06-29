@@ -12,37 +12,27 @@ export default class Level {
     constructor(application, params = {}) {
         this.app = application;
         this.levelType = params.levelType || 'animals';
-        this.sprites = [];
         this.selectedColor = null;
-        this._isProcessing = false;
-        this._elements = [];
+        this.svgElement = null;
+        this.colors = null;
     }
 
-    async startGame() {
-        console.log('%c  %c LevelScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
-        const app = this.app;
+    initSelectedColor() {
+        if (!this.colors) {
+            return;
+        }
 
-        // Load svg to doc
-        const svgResult = await fetch(svgPath);
-        const svgText = await svgResult.text();
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-        const svgElement = svgDoc.documentElement;
+        this.selectedColor = Array.from(this.colors.entries())[0][0];
+    }
 
-        svgElement.style.width = `${app.screen.width - 100}px`;
-        svgElement.style.height = `${app.screen.width - 100}px`;
-        svgElement.style.position = "absolute";
-        svgElement.style.top = "100px";
-        svgElement.style.margin = "auto";
+    sortColors(colors) {
+        const entries = Array.from(colors.entries());
 
-        // Set custom styles (uncolored)
-        const def = document.createElement("def");
-        const style = document.createElement("style");
-        style.innerHTML = ".uncolored { fill: white; pointer-events: visiblePainted;  }";
-        def.appendChild(style);
-        svgElement.appendChild(def);
+        entries.sort((a, b) => b[1] - a[1]);
+        return new Map(entries);
+    }
 
-        // Format color-parts
+    getFormattedColors(svgElement) {
         const coloredParts = svgElement.querySelectorAll("[fill]");
         const colors = new Map();
 
@@ -77,23 +67,55 @@ export default class Level {
                     }
                 }
             })
-        })
+        });
 
-        // Sort palette
-        function getSortedElements(elementMap) {
-            const entries = Array.from(elementMap.entries());
+        return colors;
+    }
 
-            entries.sort((a, b) => b[1] - a[1]);
-            return new Map(entries);
-        }
-        const sortedColors = getSortedElements(colors);
-        this.selectedColor = sortedColors[0];
+    setCustomStyles(svgElement) {
+        const def = document.createElement("def");
+        const style = document.createElement("style");
+        style.innerHTML = ".uncolored { fill: white; pointer-events: visiblePainted;  }";
+        def.appendChild(style);
+        svgElement.appendChild(def);
+    }
 
-        // Draw SVG
+    async loadLevelPicture() {
+        const app = this.app;
+
+        const svgResult = await fetch(svgPath);
+        const svgText = await svgResult.text();
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+        const svgElement = svgDoc.documentElement;
+
+        svgElement.style.width = `${app.screen.width - 100}px`;
+        svgElement.style.height = `${app.screen.width - 100}px`;
+        svgElement.style.position = "absolute";
+        svgElement.style.top = "100px";
+        svgElement.style.margin = "auto";
+
+        this.setCustomStyles(svgElement);
+        
         document.body.appendChild(svgElement);
+        this.svgElement = svgElement;
+    }
 
-        // Draw palette
-        this.drawPalette(sortedColors)
+    initColors() {
+        if (!this.svgElement) {
+            return;
+        }
+
+        this.colors = this.sortColors(this.getFormattedColors(this.svgElement));
+    }
+
+    async startGame() {
+        console.log('%c  %c LevelScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
+
+        await this.loadLevelPicture();
+        this.initColors();
+        this.initSelectedColor();
+        this.drawPalette();
     }
 
     drawColorCircle(color, count, index) {
@@ -160,15 +182,19 @@ export default class Level {
         return wrap;
     }
 
-    drawPalette(colors) {
+    drawPalette() {
+        if (!this.colors) {
+            return;
+        }
+
         const app = this.app;
-        
+
         const width = app.screen.width;
         const height = PALETTE.circle + PALETTE.padding * 2;
 
         let index = 0;
         const items = [];
-        for (const [colorCode, colorCount] of colors.entries()) {
+        for (const [colorCode, colorCount] of this.colors.entries()) {
             items.push(this.drawColorCircle(colorCode, false, index));
             index++;
         }
