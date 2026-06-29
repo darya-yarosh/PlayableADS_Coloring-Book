@@ -6,6 +6,7 @@ import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
 
 import { LEVEL_COUNT, LEVELS } from '../constants/levels';
+import { goToLevel } from './utils';
 
 let app;
 let music;
@@ -31,7 +32,13 @@ export default class Main {
         app.stage.addChild(headerText);
     }
 
-    createLevelCell(x, y, texture, label, width, height) {
+    createLevelCell(x, y, data, width, height) {
+        const {
+            cover: texture, 
+            label,
+            level,
+        } = data;
+
         const wrap = new PIXI.Container();
         const wrapSprite = PIXI.Sprite.from('cell');
         wrapSprite.width = width;
@@ -70,6 +77,13 @@ export default class Main {
 
         wrap.x = x;
         wrap.y = y;
+        
+        innerSprite.eventMode = 'static';
+        innerSprite.cursor = 'pointer';
+        innerSprite.interactive = true;
+        innerSprite.on("pointerdown", () => {
+            goToLevel(app, level);
+        })
 
         return wrap;
     }
@@ -98,8 +112,7 @@ export default class Main {
             const x = col * (gap + cellWidth) + gap;
             const y = row * (gap + cellHeight) + startGap;
             
-            console.log(x, y, col, gap, cellWidth);
-            const cell = this.createLevelCell(x, y, data.cover, data.label, cellWidth, cellHeight);
+            const cell = this.createLevelCell(x, y, data, cellWidth, cellHeight);
             wrap.addChild(cell);
         })
 
