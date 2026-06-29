@@ -1,10 +1,10 @@
-import * as PIXI from "pixi.js"
+import * as PIXI from "pixi.js";
 import { sound } from "@pixi/sound";
-import { Assets } from "@pixi/assets";
 
 // PNG
 import hand from "../img/interface/Hand.png";
 import cell from "../img/interface/ImageFrame.png";
+import cellCircle from "../img/interface/UI_CircleElements.png";
 import coverA from "../img/covers/Anime.png";
 import coverB from "../img/covers/Animals.png";
 import coverC from "../img/covers/Fantasy.png";
@@ -29,8 +29,8 @@ import { fontUrl } from "../constants/font";
 let app;
 
 export default class Preloader {
-    constructor (application) {
-        app = application
+    constructor(application) {
+        app = application;
     }
 
     async loadFont() {
@@ -44,72 +44,83 @@ export default class Preloader {
         }
     }
 
-    loadPNG() {
-        app.loader
-            .add('hand', hand)
-            .add('cell', cell)
-            .add("coverA", coverA)
-            .add("coverB", coverB)
-            .add("coverC", coverC)
-            .add("coverD", coverD)
-            .add("labelA", labelA)
-            .add("labelB", labelB)
-            .add("labelC", labelC)
-            .add("labelD", labelD);
+    async loadPNG() {
+        PIXI.Assets.add('hand', hand);
+        PIXI.Assets.add('cell', cell);
+        PIXI.Assets.add('cellCircle', cellCircle);
+        PIXI.Assets.add('coverA', coverA);
+        PIXI.Assets.add('coverB', coverB);
+        PIXI.Assets.add('coverC', coverC);
+        PIXI.Assets.add('coverD', coverD);
+        PIXI.Assets.add('labelA', labelA);
+        PIXI.Assets.add('labelB', labelB);
+        PIXI.Assets.add('labelC', labelC);
+        PIXI.Assets.add('labelD', labelD);
+
+        const textures = await PIXI.Assets.load([
+            'hand', 'cell', 'cellCircle',
+            'coverA', 'coverB', 'coverC', 'coverD',
+            'labelA', 'labelB', 'labelC', 'labelD'
+        ]);
+
+        app.textures = textures;
+        console.log('✅ PNG загружены');
     }
 
-    loadSVG() {
-        const svgTextures = {
-            typeA: PIXI.Texture.from(typeA, {
-                width: 650,
-                height: 650
-            }),
-            typeB: PIXI.Texture.from(typeB, {
-                width: 650,
-                height: 650
-            }),
-            typeC: PIXI.Texture.from(typeC, {
-                width: 650,
-                height: 650
-            }),
-            typeD: PIXI.Texture.from(typeD, {
-                width: 650,
-                height: 650
-            }),
-        };
+    async loadSVG() {
+        try {
+            const resolution = 1;
 
-        app.svgTextures = svgTextures
+            PIXI.Assets.add('levelA', levelA);
+            PIXI.Assets.add('levelB', levelB);
+            PIXI.Assets.add('levelC', levelC);
+            PIXI.Assets.add('levelD', levelD);
+
+            const textures = await PIXI.Assets.load([
+                { src: 'levelA', data: { resolution } },
+                { src: 'levelB', data: { resolution } },
+                { src: 'levelC', data: { resolution } },
+                { src: 'levelD', data: { resolution } }
+            ]);
+
+            app.svgTextures = {
+                typeA: textures.levelA || textures[0],
+                typeB: textures.levelB || textures[1],
+                typeC: textures.levelC || textures[2],
+                typeD: textures.levelD || textures[3]
+            };
+
+            console.log('✅ SVG загружены');
+        } catch (e) {
+            console.warn('⚠️ Ошибка загрузки SVG:', e);
+        }
     }
 
     loadSound() {
-        sound
-            .add('sound_fx', sound_fxA)
+        sound.add('sound_fx', sound_fxA);
+        console.log('✅ Звук загружен');
     }
 
     async startLoad() {
-        console.log('%c  %c PreloaderScene ', 'background:#d6cc28','color: #d6cc28; background: #000; font-size:10pt')
+        console.log('%c  %c PreloaderScene ', 'background:#d6cc28', 'color: #d6cc28; background: #000; font-size:10pt');
 
         try {
-            const font = new FontFace('Poppins', fontUrl);
-            await font.load();
-            document.fonts.add(font);
-            console.log('✅ Шрифт Poppins загружен');
+            await Promise.all([
+                this.loadFont(),
+                this.loadPNG(),
+                this.loadSVG()
+            ]);
+
+            this.loadSound();
+
+            console.log('✅ Все ресурсы загружены');
+            
+            return new Promise((resolve) => {
+                resolve();
+            });
         } catch (e) {
-            console.warn('⚠️ Ошибка загрузки шрифта:', e);
+            console.error('❌ Ошибка загрузки ресурсов:', e);
+            throw e;
         }
-
-        this.loadPNG();
-        
-        await this.loadFont();
-
-        //this.loadSVG();
-
-        //this.loadSound();
-
-        return new Promise((resolve) => {
-            resolve();
-        });
-
     }
 }
-
