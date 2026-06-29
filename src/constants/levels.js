@@ -23,11 +23,8 @@ export const LEVELS = [
 
 export const LEVEL_COUNT = LEVELS.length;
 
-// const cellType = [
-//     app.svgTextures?.typeA,
-//     app.svgTextures?.typeB,
-//     app.svgTextures?.typeC,
-//     app.svgTextures?.typeD,
-// ];
-
-// app.svgTextures?.[`${LEVELS[index].level}`]
+export const PALETTE = {
+    circle: 72,
+    padding: 24,
+    gap: 8,
+}
