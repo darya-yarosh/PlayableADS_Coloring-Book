@@ -9,33 +9,22 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.17.10",
-    "@babel/preset-env": "^7.17.10",
-    "babel-loader": "^8.2.5",
-    "html-inline-script-webpack-plugin": "^3.0.0",
-    "html-webpack-plugin": "^5.5.0",
-    "terser-webpack-plugin": "^5.3.1",
-    "webpack": "^5.72.1",
-    "webpack-cli": "^4.9.2",
-    "webpack-dev-server": "^4.9.0",
-    "webpack-merge": "^5.8.0"
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "babel-loader": "^8.4.1",
+    "html-inline-script-webpack-plugin": "^3.2.1",
+    "html-webpack-plugin": "^5.6.7",
+    "terser-webpack-plugin": "^5.6.1",
+    "webpack": "^5.108.1",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.15.2",
+    "webpack-merge": "^5.10.0"
   },
   "dependencies": {
-    "@pixi/app": "^6.3.2",
-    "@pixi/assets": "^6.0.0",
-    "@pixi/constants": "^6.3.2",
-    "@pixi/core": "^6.3.2",
-    "@pixi/display": "^6.3.2",
-    "@pixi/loaders": "^6.3.2",
-    "@pixi/math": "^6.3.2",
-    "@pixi/runner": "^6.3.2",
-    "@pixi/settings": "^6.3.2",
-    "@pixi/sound": "^4.2.0",
-    "@pixi/sprite": "^6.3.2",
-    "@pixi/ticker": "^6.3.2",
-    "@pixi/utils": "^6.3.2",
-    "gsap": "^3.10.4",
-    "pixi.js": "^6.3.2"
+    "@pixi/sound": "^5.2.3",
+    "@pixi/ui": "^1.2.4",
+    "gsap": "^3.15.0",
+    "pixi.js": "^7.4.3"
   },
   "packageManager": "yarn@3.2.1"
 }
