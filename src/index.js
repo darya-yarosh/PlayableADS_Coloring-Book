@@ -28,6 +28,9 @@ await preloader.startLoad();
 
 const game = new Main(app);
 game.startGame();
+export const STATE = {
+    currentPage: game,
+};
 
 function resize() {
     const isLandscape = window.innerWidth > window.innerHeight;
@@ -38,6 +41,7 @@ function resize() {
     const isHeightChanged = app.renderer.height !== size[1];
     if (isWidthChanged || isHeightChanged) {
         app.renderer.resize(size[0], size[1]);
+        STATE.currentPage.handleResize?.(isLandscape);
     }
     
     const isScreenWidthWiderThanApp = window.innerWidth / window.innerHeight >= ratio;
