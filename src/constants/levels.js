@@ -1,22 +1,22 @@
 export const LEVELS = [
     {
         cover: "coverA",
-        level: "levelA",
+        level: "typeA",
         label: "labelA",
     },
     {
         cover: "coverB",
-        level: "levelB",
+        level: "typeB",
         label: "labelB",
     },
     {
         cover: "coverC",
-        level: "levelC",
+        level: "typeC",
         label: "labelC",
     },
     {
         cover: "coverD",
-        level: "levelD",
+        level: "typeD",
         label: "labelD",
     },
 ];
@@ -25,6 +25,9 @@ export const LEVEL_COUNT = LEVELS.length;
 
 export const PALETTE = {
     circle: 72,
-    padding: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 8,
     gap: 8,
 }
+
+export const INTERACTIVE_LEVEL = LEVELS[3].level;

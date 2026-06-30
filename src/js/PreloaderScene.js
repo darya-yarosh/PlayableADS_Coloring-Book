@@ -90,6 +90,13 @@ export default class Preloader {
                 typeD: textures.levelD || textures[3]
             };
 
+            app.svgLevels = {
+                typeA: levelA,
+                typeB: levelB,
+                typeC: levelC,
+                typeD: levelD,
+            }
+
             console.log('✅ SVG загружены');
         } catch (e) {
             console.warn('⚠️ Ошибка загрузки SVG:', e);
