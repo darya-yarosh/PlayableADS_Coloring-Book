@@ -4,11 +4,17 @@ import { PixiPlugin } from "gsap/PixiPlugin";
 import Preloader from "./js/PreloaderScene.js";
 import Main from './js/MainScene.js';
 
-const size = [540, 960];
+const isLandscape = window.innerWidth > window.innerHeight;
+
+const width = window.innerWidth > 540 ? 540: window.innerWidth;
+const height = window.innerHeight > 960 ? 960 : window.innerHeight;
+const verticalSize = [width, height];
+const horizontalSize = [height, width];
+const currentSize = isLandscape ? horizontalSize : verticalSize;
 
 const app = new PIXI.Application({
-    width: size[0],
-    height: size[1],
+    width: currentSize[0],
+    height: currentSize[1],
     resolution: window.devicePixelRatio,
     background: 0xEDE8E5
 });
@@ -21,13 +27,21 @@ const preloader = new Preloader(app);
 await preloader.startLoad();
 
 const game = new Main(app);
-
 game.startGame();
 
 function resize() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const size = isLandscape ? horizontalSize : verticalSize;
     const ratio = size[0] / size[1];
+
+    const isWidthChanged = app.renderer.width !== size[0];
+    const isHeightChanged = app.renderer.height !== size[1];
+    if (isWidthChanged || isHeightChanged) {
+        app.renderer.resize(size[0], size[1]);
+    }
     
-    if (window.innerWidth / window.innerHeight >= ratio) {
+    const isScreenWidthWiderThanApp = window.innerWidth / window.innerHeight >= ratio;
+    if (isScreenWidthWiderThanApp) {
         const ancho = ~~(window.innerHeight * ratio);
         const alto = window.innerHeight;
         app.view.style.position = 'absolute';
@@ -42,9 +56,14 @@ function resize() {
         app.view.style.width = ancho + 'px';
         app.view.style.height = alto + 'px';
         app.view.style.left = '0px';
-        app.view.style.top = (window.innerHeight / 2 - alto / 2) + 'px';
+        app.view.style.top = ~~((window.innerHeight - alto) / 2) + 'px';
     }
 }
 
-resize();
-window.onresize = resize;
+window.addEventListener('orientationchange', () => {
+    setTimeout(resize, 300);
+});
+
+window.addEventListener('resize', resize);
+
+setTimeout(resize, 0);
