@@ -5,6 +5,7 @@ import { Sprite } from '@pixi/sprite';
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
 
+import { FONT_FAMILY } from '../constants/font';
 import { LEVEL_COUNT, LEVELS } from '../constants/levels';
 import { goToLevel } from './utils';
 
@@ -18,7 +19,7 @@ export default class Main {
 
     drawHeader() {
         const headerText = new PIXI.Text("Choose category", {
-            fontFamily: 'Poppins',
+            fontFamily: FONT_FAMILY,
             fontSize: 48,
             fontWeight: 600,
             fill: 0x3a3a3a, 
@@ -224,7 +225,7 @@ export default class Main {
         const footerText = new PIXI.Text(
             "Happy Color", 
             {
-                fontFamily: 'Poppins',
+                fontFamily: FONT_FAMILY,
                 fill: 0x000000,
                 fontWeight: 600,
                 fontSize: 36,

@@ -35,10 +35,10 @@ export default class Preloader {
 
     async loadFont() {
         try {
-            const font = new FontFace('Poppins', fontUrl);
+            const font = new FontFace("Poppins", fontUrl);
             await font.load();
             document.fonts.add(font);
-            console.log('✅ Шрифт Poppins загружен');
+            console.log(`✅ Шрифт Poppins загружен`);
         } catch (e) {
             console.warn('⚠️ Ошибка загрузки шрифта:', e);
         }

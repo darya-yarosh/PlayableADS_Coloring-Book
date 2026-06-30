@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { Assets } from '@pixi/assets';
 import { ScrollBox } from '@pixi/ui';
+import { FONT_FAMILY } from '../constants/font';
 
 import { PALETTE } from '../constants/levels';
 
@@ -158,7 +159,7 @@ export default class Level {
         }
 
         const number = new PIXI.Text(`${index+1}`, {
-            fontFamily: 'Poppins',
+            fontFamily: FONT_FAMILY,
             fontSize: 32,
             fontWeight: 600,
             fill: numberColor, 
