@@ -9,12 +9,21 @@ import { FONT_FAMILY } from '../constants/font';
 import { LEVEL_COUNT, LEVELS } from '../constants/levels';
 import { goToLevel } from './utils';
 
-let app;
-let music;
-
 export default class Main {
     constructor (application) {
-        app = application;
+        this.app = application;
+        this.isVertical = this.app?.screen?.width ? this.app.screen.width < this.app.screen.height : true;
+        console.log(this.app.screen.width, this.app.screen.height);
+    }
+
+    handleResize(isLandscape) {
+        console.log(`Game resized to ${isLandscape ? 'landscape' : 'portrait'}`);
+
+        if (this.app) {
+            this.isVertical = !isLandscape;
+            this.app.stage.removeChildren();
+            this.startGame();
+        }
     }
 
     drawHeader() {
@@ -24,13 +33,13 @@ export default class Main {
             fontWeight: 600,
             fill: 0x3a3a3a, 
             align : 'center',
-            wordWrap: true,
+            wordWrap: this.isVertical,
             wordWrapWidth: 200,
         });
         headerText.anchor.set(0.5, 0.5);
-        headerText.x = app.screen.width / 2;
+        headerText.x = this.app.screen.width / 2;
         headerText.y = 0 + 40 + headerText.height / 2;
-        app.stage.addChild(headerText);
+        this.app.stage.addChild(headerText);
     }
 
     createLevelCell(x, y, data, width, height) {
@@ -83,42 +92,56 @@ export default class Main {
         innerSprite.cursor = 'pointer';
         innerSprite.interactive = true;
         innerSprite.on("pointerdown", () => {
-            goToLevel(app, level);
+            goToLevel(this.app, level);
         })
 
         return wrap;
     }
+
+    getCellSizes() {
+        let gap = 20;
+
+        if (!this.isVertical) {
+            return (this.app.screen.width - (gap * 5)) / 4;
+        }
+
+        const defaultWidth = (this.app.screen.width - (gap * 3)) / 2;
+        if (defaultWidth < this.app.screen.height / 2) {
+            gap = 60;
+            return (this.app.screen.width - (gap * 3)) / 2;
+        } else {
+            return defaultWidth;
+        }
+    }
     
     drawLevelsList() {
-        const isVertical = true;
-
         const wrap = new PIXI.Container();
         wrap.name = "levelsList";
 
-        let gap = 20;
-        let startGap = isVertical ? 200 : 100;
-
-        const rows = isVertical ? 2 : 1;
-        const columns = isVertical ? 2 : 4;
+        const rows = this.isVertical ? 2 : 1;
+        const columns = this.isVertical ? 2 : 4;
         const spiralledLevels = this.drawSpiralLevelsList(rows, columns, LEVELS);
-        const cellWidth = isVertical ? (app.screen.width - (gap * 3)) / 2 : (app.screen.width - (gap * 5)) / 4;
-        const cellHeight = cellWidth;
-
+        const size = this.getCellSizes();
+        const cellWidth = size;
+        const cellHeight = size;
+        
+        const gap = 20;
         spiralledLevels.forEach((level, index) => {
             const {
                 row,
                 col,
                 data
             } = level;
-            const x = col * (gap + cellWidth) + gap;
-            const y = row * (gap + cellHeight) + startGap;
-            
+            const x = col * (gap + cellWidth);
+            const y = row * (gap + cellHeight);
+
             const cell = this.createLevelCell(x, y, data, cellWidth, cellHeight);
             wrap.addChild(cell);
         })
 
-
-        app.stage.addChild(wrap);
+        wrap.y = this.isVertical ? 200 : 150;
+        wrap.x = this.app.screen.width / 2 - wrap.width / 2;
+        this.app.stage.addChild(wrap);
     }
 
     drawSpiralLevelsList(rows, cols, cellData) {
@@ -180,7 +203,7 @@ export default class Main {
 
     drawHand() {
         const hand = Sprite.from('hand');
-        app.stage.addChild(hand)
+        this.app.stage.addChild(hand)
         
         hand.scale.set(0.3);
         
@@ -189,15 +212,15 @@ export default class Main {
             x: 0.2, y: 0.2, duration: (durationPerCell + 0.3) / 2, repeat: -1, yoyo: true, ease: 'Quad.InOut',
         })
 
-        const cellsWrapper = app.stage.children.find(c => c.name === "levelsList");
+        const cellsWrapper = this.app.stage.children.find(c => c.name === "levelsList");
         const cells = cellsWrapper?.children ?? [];
 
         let currentIndex = 0;
 
         const moveToNextCell = () => {
             const cell = cells[currentIndex];
-            const targetX = cell.x + cell.width / 2;
-            const targetY = cell.y + cell.height / 2;
+            const targetX = cellsWrapper.x + cell.x + cell.width / 2;
+            const targetY = cellsWrapper.y + cell.y + cell.height / 2;
 
             gsap.to(hand, {
                 x: targetX,
@@ -212,8 +235,8 @@ export default class Main {
         };
 
         const firstCell = cells[0];
-        hand.x = firstCell.x + firstCell.width / 2;
-        hand.y = firstCell.y + firstCell.height / 2;
+        hand.x = cellsWrapper.x + firstCell.x + firstCell.width / 2;
+        hand.y = cellsWrapper.y + firstCell.y + firstCell.height / 2;
 
         setTimeout(() => {
             currentIndex = 1;
@@ -228,13 +251,13 @@ export default class Main {
                 fontFamily: FONT_FAMILY,
                 fill: 0x000000,
                 fontWeight: 600,
-                fontSize: 36,
+                fontSize: this.isVertical ? 36 : 42,
             }
         );
         footerText.anchor.set(0.5, 0.5);
-        footerText.x = app.screen.width / 2;
-        footerText.y = app.screen.height - 80 - footerText.height / 2;
-        app.stage.addChild(footerText);
+        footerText.x = this.app.screen.width / 2;
+        footerText.y = this.app.screen.height - 80 - footerText.height / 2;
+        this.app.stage.addChild(footerText);
     }
 
     startGame() {
