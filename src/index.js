@@ -15,7 +15,9 @@ const currentSize = isLandscape ? horizontalSize : verticalSize;
 const app = new PIXI.Application({
     width: currentSize[0],
     height: currentSize[1],
-    resolution: window.devicePixelRatio,
+    resolution: window.devicePixelRatio || 1,
+    autoDensity: true,
+    antialias: true,
     background: 0xEDE8E5
 });
 
