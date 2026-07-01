@@ -55,7 +55,7 @@ export default class Level {
         this.svgElement.style.top = 0;
         document.body.appendChild(this.svgElement);
         const svgRect = this.svgElement.getBoundingClientRect();
-        
+
         const numbersContainer = document.createElement("svg");
         numbersContainer.style.cssText = `
             position: absolute;
@@ -77,9 +77,10 @@ export default class Level {
         let numberElements = [];
 
         const specialColors = [14, 16, 18];
+        const specialIndexes = [173, 175, 182];
+        
         try {
-            this.getColoredElements(this.svgElement).forEach((part, partIndex) => {
-
+            const createNumberContent = (part, partIndex) => {
                 const color = this.getElementColor(part);
                 if (!color) {
                     return;
@@ -116,41 +117,31 @@ export default class Level {
                 }
 
                 const fontSize = calculateFontSize(bbox, scaleX, scaleY);
-
-                const numberElement = document.createElement("path");
-                numberElement.textContent = number + 1;
-                numberElement.style.cssText = `
-                    position: absolute;
-                    left: ${scaledX}px;
-                    top: ${scaledY}px;
-                    transform: translate(-50%, -50%);
-                    color: black;
-                    font-size: 12px;
-                    font-weight: bold;
-                    font-family: Arial, sans-serif;
-                    text-shadow: 0 0 2px white, 0 0 2px white, 0 0 2px white;
-                    user-select: none;
-                    pointer-events: none;
-                `;
                 
-                const tN = new PIXI.Text(number + 1, {
+                const numberText = new PIXI.Text(number + 1, {
                     fontFamily: FONT_FAMILY,
                     fontWeight: 600,
                     fontSize: 6,
                     x: scaledX,
                     y: scaledY,
                     color: "black",
-                })
-                tN.x = scaledX;
-                tN.y = scaledY;
+                });
+                numberText.x = scaledX;
+                numberText.y = scaledY;
                 
-                pictureWrap?.children?.[1]?.addChild(tN);
+                pictureWrap?.children?.[1]?.addChild(numberText);
+                if (partIndex === specialIndexes[0]) {
+                    this.firstAreaBox = bbox;
+                }
+                return numberText;
+            };
+
+            const coloredElements = this.getColoredElements(this.svgElement);
+            specialIndexes.forEach((indexValue, index) => {
+                createNumberContent(coloredElements[indexValue], indexValue);
             });
 
-            numberElements.forEach(el => numbersContainer.appendChild(el));
-            this.numbersContainer = numbersContainer;
-            console.log(`Добавлено ${numberElements.length} цифр`);
-            
+            document.body.removeChild(this.svgElement);
         } catch (error) {
             console.warn("Ошибка при отрисовке цифр:", error);
         }
@@ -241,7 +232,7 @@ export default class Level {
             colors.set(color, currentCount + 1);
 
             part.classList.add("uncolored");
-            part.addEventListener("click", (e) => {
+            part.addEventListener("click", () => {
                 const partColor = this.getElementColor(part);
                 console.log("click", this.selectedColor, partColor);
 
@@ -487,8 +478,9 @@ export default class Level {
         const initY = app.screen.height / 2;
 
         hand.name = "hand";
+        hand.width = hand.width * scale;
+        hand.height = hand.height * scale;
         hand.anchor.set(0.5, 0.5);
-        hand.scale.set(scale);
 
         hand.x = initX;
         hand.y = initY;
@@ -497,6 +489,7 @@ export default class Level {
             const firstColor = this.findPaletteFirstColor("colorFirst");
             
             if (firstColor) {
+                // MARK
                 hand.x = firstColor.worldTransform.tx + firstColor.width / 1.75;
                 hand.y = firstColor.worldTransform.ty + firstColor.height / 2.75;
                 hand.anchor.set(0, 0);
@@ -569,15 +562,16 @@ export default class Level {
                     yoyo: true, 
                     ease: 'Quad.InOut',
                 });
-            }
+            };
 
             const areaFirstX = this.app.screen.width / 2;
-            const areaFirstY = this.app.screen.height / 2
+            const areaFirstY = this.app.screen.height / 2;
             moveHand(areaFirstX, areaFirstY);
 
+            const pictureWrap = this.app.stage.children.find((c) => c.name === "picture");
+            const picture = pictureWrap?.children?.[1] || null;
+
             const zoomArea = () => {
-                const pictureWrap = this.app.stage.children.find((c) => c.name === "picture");
-                const picture = pictureWrap?.children?.[1] || null;
                 if (!picture) {
                     return;
                 }
@@ -589,9 +583,11 @@ export default class Level {
                 picture.texture = new PIXI.Texture(texture);
                 
                 this.app.ticker.add((delta) => {
-                    if (picture.scale.x < 1.5) {
-                        picture.scale.x += 0.02 * delta;
-                        picture.scale.y += 0.02 * delta;
+                    if (picture.scale.x < 3) {
+                        picture.scale.x += 0.05 * delta;
+                        picture.scale.y += 0.05 * delta;
+
+                        picture.pivot.y += delta * 2;
                     } else {
                         picture.ticker?.remove(this);
                     }
@@ -601,7 +597,10 @@ export default class Level {
             zoomArea();
 
             const activateInteractiveForArea = () => {
-                // TODO
+                console.log("A", picture);
+                picture.on("pointerdown", (e) => {
+                    console.log(e, this.firstAreaBox);
+                })
                 const isClickedAreaAndFilled = true;
                 
                  if (isClickedAreaAndFilled) {
