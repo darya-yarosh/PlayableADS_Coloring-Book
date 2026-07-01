@@ -9,6 +9,20 @@
     <style type="text/css">
       body {display:flex; justify-content:center; align-items:center; width:100%; height: 100%; background-color: #d1b8aa; margin: 0; padding: 0;}
       * {overflow: hidden;padding: 0;margin: 0;}
+      .yoyo {
+        animation: yoyo 1s infinite ease-in-out;
+      }
+      @keyframes yoyo {
+        0% {
+          scale: 0.1;
+        }
+        50% {
+          scale: 0.2;
+        }
+        100% {
+          scale: 0.1;
+        }
+      }
     </style>   
   </head>
   <body>
