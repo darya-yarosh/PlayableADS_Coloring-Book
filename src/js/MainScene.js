@@ -1,6 +1,4 @@
-import * as PIXI from 'pixi.js'
-import { sound } from '@pixi/sound';
-import { Sprite } from '@pixi/sprite';
+import { Container, Sprite, Text } from 'pixi.js';
 
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
@@ -13,7 +11,6 @@ export default class Main {
     constructor (application) {
         this.app = application;
         this.isVertical = this.app?.screen?.width ? this.app.screen.width < this.app.screen.height : true;
-        console.log(this.app.screen.width, this.app.screen.height);
     }
 
     handleResize(isLandscape) {
@@ -27,7 +24,7 @@ export default class Main {
     }
 
     drawHeader() {
-        const headerText = new PIXI.Text("Choose category", {
+        const headerText = new Text("Choose category", {
             fontFamily: FONT_FAMILY,
             fontSize: 48,
             fontWeight: 600,
@@ -49,20 +46,20 @@ export default class Main {
             level,
         } = data;
 
-        const wrap = new PIXI.Container();
-        const wrapSprite = PIXI.Sprite.from('cell');
+        const wrap = new Container();
+        const wrapSprite = Sprite.from('cell');
         wrapSprite.width = width;
         wrapSprite.height = height;
         wrapSprite.x = 0;
         wrapSprite.y = 0;
 
-        const maskSprite = PIXI.Sprite.from('cell');
+        const maskSprite = Sprite.from('cell');
         maskSprite.width = width;
         maskSprite.height = height;
         maskSprite.x = 0;
         maskSprite.y = 0;
 
-        const innerSprite = PIXI.Sprite.from(texture);
+        const innerSprite = Sprite.from(texture);
         innerSprite.width = width;
         innerSprite.height = height;
         innerSprite.x = 0;
@@ -70,7 +67,7 @@ export default class Main {
 
         innerSprite.mask = maskSprite;
 
-        const labelSprite = PIXI.Sprite.from(label);
+        const labelSprite = Sprite.from(label);
         const difference = labelSprite.width < width / 2 
             ? labelSprite.width * 1 / (width / 2)
             : (width / 2) * 1 / labelSprite.width;
@@ -115,7 +112,7 @@ export default class Main {
     }
     
     drawLevelsList() {
-        const wrap = new PIXI.Container();
+        const wrap = new Container();
         wrap.name = "levelsList";
 
         const rows = this.isVertical ? 2 : 1;
@@ -245,7 +242,7 @@ export default class Main {
     }
 
     drawFooter() {
-        const footerText = new PIXI.Text(
+        const footerText = new Text(
             "Happy Color", 
             {
                 fontFamily: FONT_FAMILY,
@@ -267,7 +264,5 @@ export default class Main {
         this.drawLevelsList();
         this.drawHand();
         this.drawFooter();
-
-        // music =  sound.play('sound_fx');
     }
 }

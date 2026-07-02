@@ -1,4 +1,5 @@
-import * as PIXI from 'pixi.js';
+import { Application } from 'pixi.js';
+
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
 import Preloader from "./js/PreloaderScene.js";
@@ -6,13 +7,13 @@ import Main from './js/MainScene.js';
 
 const isLandscape = window.innerWidth > window.innerHeight;
 
-const width = window.innerWidth > 540 ? 540: window.innerWidth;
-const height = window.innerHeight > 960 ? 960 : window.innerHeight;
+const width = 540;
+const height = 960;
 const verticalSize = [width, height];
 const horizontalSize = [height, width];
 const currentSize = isLandscape ? horizontalSize : verticalSize;
 
-const app = new PIXI.Application({
+const app = new Application({
     width: currentSize[0],
     height: currentSize[1],
     resolution: window.devicePixelRatio || 1,

@@ -1,4 +1,5 @@
-import * as PIXI from 'pixi.js';
+import { BaseTexture, Container, Graphics, Sprite, SVGResource, Text, Texture } from 'pixi.js';
+
 import { Assets } from '@pixi/assets';
 import { ScrollBox } from '@pixi/ui';
 import { gsap } from "gsap";
@@ -96,7 +97,7 @@ export default class Level {
 
                 const fontSize = calculateFontSize(bbox, scaleX, scaleY);
                 
-                const numberText = new PIXI.Text(index + 1, {
+                const numberText = new Text(index + 1, {
                     fontFamily: FONT_FAMILY,
                     fontWeight: 600,
                     fontSize: 6,
@@ -163,10 +164,14 @@ export default class Level {
     }
 
     getColoredElements(element) {
-        return element.querySelectorAll("[fill], [class]");
+        return element.querySelectorAll("[fill], [class], [style]");
     }
 
     getElementColor(element) {
+        if (!element) {
+            return null;
+        }
+
         const attributeColor = element.getAttribute("fill");
         if (attributeColor) {
             return attributeColor;
@@ -262,7 +267,7 @@ export default class Level {
     setCustomStyles(svgElement) {
         const def = document.createElement("def");
         const style = document.createElement("style");
-        style.innerHTML = "svg { overflow: hidden; } svg >* { transition: transform 2s; } .uncolored { fill: white; pointer-events: visiblePainted;  } .zoomed >* { transform: scale(2); transform-origin: left; }";
+        style.innerHTML = "svg { overflow: hidden; } svg >* { transition: transform 2s; } .uncolored { fill: white !important; pointer-events: visiblePainted;  } .zoomed >* { transform: scale(2); transform-origin: left; }";
         def.appendChild(style);
         svgElement.appendChild(def);
     }
@@ -296,13 +301,13 @@ export default class Level {
     async drawInitPicture() {
         const app = this.app;
 
-        const wrap = new PIXI.Container();
+        const wrap = new Container();
         wrap.name = "picture";
         
-        const resource = new PIXI.SVGResource(this.svgElement.outerHTML);
+        const resource = new SVGResource(this.svgElement.outerHTML);
         const size = this.isVertical ? app.screen.width - 100 : app.screen.height - 200;
-        const baseTexture = new PIXI.BaseTexture(resource);
-        const texture = new PIXI.Texture(baseTexture);
+        const baseTexture = new BaseTexture(resource);
+        const texture = new Texture(baseTexture);
         
         await new Promise((resolve) => {
             if (baseTexture.valid) {
@@ -312,18 +317,18 @@ export default class Level {
             }
         });
         
-        const maskGraphics = new PIXI.Graphics();
+        const maskGraphics = new Graphics();
         maskGraphics.beginFill(0xffffff);
         maskGraphics.drawRect(0, 0, texture.width, texture.height);
         maskGraphics.endFill();
         wrap.addChild(maskGraphics);
 
-        const wrapPicture = new PIXI.Container();
+        const wrapPicture = new Container();
         wrapPicture.x = 0;
         wrapPicture.y = 0;
         wrapPicture.mask = maskGraphics;
 
-        const sprite = new PIXI.Sprite(texture);
+        const sprite = new Sprite(texture);
         sprite.x = 0;
         sprite.y = 0;
         wrapPicture.width = sprite.width;
@@ -346,9 +351,9 @@ export default class Level {
     }
 
     drawColorCircle(color, count, index) {
-        const wrap = new PIXI.Container();
+        const wrap = new Container();
 
-        const circle = PIXI.Sprite.from("cellCircle");
+        const circle = Sprite.from("cellCircle");
         const padding = 0;
         const circleSize = PALETTE.circle + padding * 2
         circle.width = circleSize;
@@ -357,14 +362,14 @@ export default class Level {
         circle.x = 0;
         wrap.addChild(circle);
 
-        const maskSprite = PIXI.Sprite.from('cellCircle');
+        const maskSprite = Sprite.from('cellCircle');
         maskSprite.width = circleSize;
         maskSprite.height = circleSize;
         maskSprite.x = 0;
         maskSprite.y = 0;
         wrap.addChild(maskSprite);
 
-        const colorGraphic = new PIXI.Graphics();
+        const colorGraphic = new Graphics();
         const size = PALETTE.circle;
         
         colorGraphic.beginFill(color);
@@ -385,7 +390,7 @@ export default class Level {
             numberColor = "0xfff";
         }
 
-        const number = new PIXI.Text(`${index+1}`, {
+        const number = new Text(`${index+1}`, {
             fontFamily: FONT_FAMILY,
             fontSize: 32,
             fontWeight: 600,
@@ -470,7 +475,7 @@ export default class Level {
     drawHand() {
         const app = this.app;
 
-        const hand = PIXI.Sprite.from('hand');
+        const hand = Sprite.from('hand');
 
         const scale = this.levelType === INTERACTIVE_LEVEL ? 0.1 : 0.3;
         const initX = app.screen.width / 2;
@@ -519,7 +524,7 @@ export default class Level {
 
         const app = this.app;
 
-        const tapToClickText = new PIXI.Text("Tap to Color", {
+        const tapToClickText = new Text("Tap to Color", {
             fontSize: this.isVertical ? 54 : 48,
             fontWeight: 600,
             fontFamily: FONT_FAMILY,
@@ -544,7 +549,10 @@ export default class Level {
             return;
         }
 
-        firstColor.on("pointerdown", () => {
+        let isFirstClicked = false;
+        const onClickFirstColor = () => {
+            firstColor.off("pointerdown", onClickFirstColor);
+
             this.selectedColor = firstColor.color;
 
             const moveHand = (x, y) => {
@@ -576,7 +584,7 @@ export default class Level {
             let ended = false;
             
             const activateInteractiveForArea = () => {
-                picture.on("pointerdown", (e) => {
+                const onClickPicture = (e) => {
                     const { x, y } = e.data.global;
                     const difference = 100;
                     const xPointInArea = x > this.firstAreaBox.x - difference && x < this.firstAreaBox.x + difference;
@@ -585,15 +593,17 @@ export default class Level {
                     const isClickedAreaAndFilled = yPointInArea && xPointInArea;
                     
                     if (isClickedAreaAndFilled) {
+                        picture.off("pointerdown", onClickPicture);
+
                         const firstColorAreaElement = this.svgElement.querySelector("[id='firstColor']");
                         if (firstColorAreaElement) {
                             firstColorAreaElement.classList.remove("uncolored");
                         }
 
-                        const resource = new PIXI.SVGResource(this.svgElement.outerHTML);
-                        const baseTexture = new PIXI.BaseTexture(resource);
-                        const texture = new PIXI.Texture(baseTexture);
-                        picture.children[0].texture = new PIXI.Texture(texture);
+                        const resource = new SVGResource(this.svgElement.outerHTML);
+                        const baseTexture = new BaseTexture(resource);
+                        const texture = new Texture(baseTexture);
+                        picture.children[0].texture = new Texture(texture);
 
                         const secondColor = this.findPaletteFirstColor("colorSecond");
                         if (!secondColor) {
@@ -603,15 +613,21 @@ export default class Level {
                         const x = secondColor.worldTransform.tx + secondColor.width / 1.75;
                         const y = secondColor.worldTransform.ty + secondColor.height / 2.75;
                         moveHand(x, y);
-                        secondColor.on("pointerdown", () => {
+
+                        const onClickSecondColor = () => {
                             const areaSecondX = 0;
                             const areaSecondY = 0;
                             moveHand(areaSecondX, areaSecondY)
 
                             this.configureDefaultInteractive();
-                        });
+                            secondColor.off("pointerdown", onClickSecondColor);
+                        }
+
+                        secondColor.on("pointerdown", onClickSecondColor);
                     }
-                 })
+                };
+
+                picture.on("pointerdown", onClickPicture);
             }
 
             const zoomArea = () => {
@@ -620,10 +636,10 @@ export default class Level {
                 }
 
                 picture.interactive = true;
-                const resource = new PIXI.SVGResource(this.svgElement.outerHTML);
-                const baseTexture = new PIXI.BaseTexture(resource);
-                const texture = new PIXI.Texture(baseTexture);
-                picture.texture = new PIXI.Texture(texture);
+                const resource = new SVGResource(this.svgElement.outerHTML);
+                const baseTexture = new BaseTexture(resource);
+                const texture = new Texture(baseTexture);
+                picture.texture = new Texture(texture);
                 
                 this.app.ticker.add((delta) => {
                     if (picture.scale.x < 3) {
@@ -639,11 +655,11 @@ export default class Level {
                             ended = true;
                             this.firstAreaBox = {
                                 x: this.isVertical 
-                                    ? this.app.view.offsetLeft + pictureWrap.x - initX * fScaleX * 0.1
-                                    : this.app.view.offsetLeft + pictureWrap.x + initX * fScaleX * 2 * 0.1,
+                                    ? this.app.view.offsetLeft + pictureWrap.x
+                                    : this.app.view.offsetLeft + pictureWrap.x + 100,
                                 y: this.isVertical 
-                                    ? this.app.view.offsetTop + pictureWrap.y + picture.pivot.y * 0.1 + (initY - initY * fScaleY * 2 * 0.1)
-                                    : this.app.view.offsetTop + pictureWrap.y + picture.pivot.y * 0.1 + (initY * 0.1),
+                                    ? this.app.view.offsetTop + pictureWrap.y + 240
+                                    : this.app.view.offsetTop + pictureWrap.y + 40,
                             }
 
                             const areaFirstX = this.firstAreaBox.x;
@@ -657,17 +673,19 @@ export default class Level {
             }
 
             zoomArea();
-        })
+        };
+
+        firstColor.on("pointerdown", onClickFirstColor)
     }
 
     configureDefaultInteractive() {
         this.app.stage.eventMode = 'static';
         this.app.stage.hitArea = this.app.screen;
         this.app.stage.on("pointerdown", (e) => {
-            if (typeof FbPlayableAd !== 'undefined' && typeof FbPlayableAd.onCTAClick === 'function') {
-                FbPlayableAd.onCTAClick();
-            } else if (typeof ExitApi !== 'undefined' && typeof ExitApi.exit === 'function') {
-                ExitApi.exit();
+            if (typeof window?.FbPlayableAd !== 'undefined' && typeof window?.FbPlayableAd.onCTAClick === 'function') {
+                window.FbPlayableAd.onCTAClick();
+            } else if (typeof window?.ExitApi !== 'undefined' && typeof window?.ExitApi.exit === 'function') {
+                window.ExitApi.exit();
             } else {
                 alert('Download the game in App Store / Google Play!');
             }
@@ -697,7 +715,7 @@ export default class Level {
         setTimeout(() => {
             this.drawHand();
         }, 0);
-``
+
         this.configureInteractive();
     }
 }

@@ -22,7 +22,7 @@ module.exports = {
         }
       },
       {
-        test: /\.(gif|png|jpe?g|svg|mp3|m4a|ogg|wav|json|ttf$)$/i,
+        test: /\.(gif|png|jpe?g|svg|mp3|m4a|ogg|wav|json|ttf|woff2$)$/i,
         type: 'asset/inline'
       },
     ]

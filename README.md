@@ -46,8 +46,5 @@ The finished `index.html` file is waiting for you in the `dist` folder
 Resource loading is declared in `js/PreloaderScene.js`
 `import filenameCustom from '../img/filename.png'` or `import filenameCustom from '../audio/filename.mp3'` for each asset
 
-##### Load Audio
-Use `sound.add('custom_name', filenameCustom)` function to load sounds.
-
 ##### Load Image
 Use `app.loader.add("custom_name", filenameCustom)` function to load images
