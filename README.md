@@ -1,50 +1,25 @@
-![pixi-webpack-playable-logo](/src/img/logo.png)
-# Playable Ads in one file
-## PixiJS v6 + Webpack 5 with auto base64 assets decode
-> A PixiJS project template for JavaScript (ES6 support via Babel) and Webpack 5 that includes local server with  hot-reloading for development and production builds in one file with assets on base64.
+# Тестовое задание - Playable Ads (Coloring by Numbers)
+Версия PixiJS: 7
+Доп. установки: @pixi/ui, gsap
+Итоговый размер билда: 4+ МБ
 
-You can also try [Phaser Webpack Template](https://github.com/vardanyanlg/phaser3-webpack-playable "Phaser 3 Playable Ads with Webpack") or [Phaser Parcel Template](https://github.com/vardanyanlg/phaser3-parcel-playable "Phaser 3 Playable Ads with Parcel")
+## Основные итоги/мнение:
+* Постановка задачи хорошая (я бы даже сказала подробная), а приложенные материалы к заданию - достаточные, чтобы выполнить всю задачу.
+* Оптимизировала некоторые ассеты: 
+1) Выбрала шрифт Regular (из представленных в архиве), а затем форматировала из ttf в woff2.
+2) Оптимизировала SVG-ассеты через [SVGViewer](https://www.svgviewer.dev), 
+3) Прогнала PNG-ассеты через [TiniPNG](https://tinypng.com)
+4) Единственный ассет, нетронутый - Mandalas.svg.
 
-### Features
-- The project is assembled into one file and is ready for any ad networks.
-- Final build with minification and code optimization
-- All assets will automatically be base64 encoded and embedded in the project
-- Modern code with inheritance classes, arrow functions, as well as asynchronous code, and all this will work even in older browsers thanks to the built-in BabelJS
+## При разрабокте были следующие моменты:
+1) Понимание того, как в SVG-элементе пройтись по всем частям, обесцветить, повесить слушатели кликов и возврат цвета - имелось. Но вот как это реализовать через спрайт - пришлось разбираться. 
+2) Намудрила с попыткой попасть в дизайн проекта. В той же палитре цветов я установила PixiUI ради скроллящегося блока, но потом уже поняла, что достаточно было ограниченное кол-во цветов вывести чтобы соответствовать условиям самой рекламы, а не логике как в приложении.
+3) Не сразу определилась с версией PIXI, из-за чего пожалела - у каждой из версий тут есть такие изменения, которые меняют логику, и туда-сюда переобновлять структуру было не очень (когда пыталась понять как победить проблему с СВГ и скроллящимся блоком, которые доступны на версии выше 7). В целом проблема вытекла из-за того, что как основу брала готовый проект-сборщик, реализованный на PIXI v.6, из-за чего не подумала что нужно обновить версию.
+4) Слишком много времени потратила на борьбу с SVG - их отображение в высоком качестве, их модернизация чтобы обесцветить и закрасить, попытка разобраться как им повысить качество (потому что при загрузке файла напрямую текстуры "шакализировались").
+5) Сначала переводила шрифт в формат base64, но при оптимизации поняла что это не лучшее решение. Так же была проблема с отображением шрифта в некоторых случах, из-за чего и пришлось возвращаться обратно на подгрузку через ассеты.
+6) Из-за того, что при конвертировании чисел в текстуру я теряла возможность прямой ссылки на объект (как это было в обычных html-элементах), сложности образовались с попыткой сохранить позицию, куда должен двигаться спрайт руки чтобы показать пользователю на зону покраски.
 
-### Requirements
-[Node.js](https://nodejs.org/) (with npm) and I recommend installing and using [Yarn 3](https://yarnpkg.com/).
-
-### Getting Started
-You need to either download this project or clone it:
-```bash
-git clone https://github.com/vardanyanlg/pixi-webpack-playable.git
-```
-Make sure you are in the project, if not then go there:
-```bash
-cd pixi-webpack-playable
-```
-Now you need to install all the necessary dependencies for the project to work:
-```bash
-yarn install
-```
-
-Everything is ready to start the project.
-For local testing use (localhost:8000 will open auto in browser) and without stat warnings
-```bash
-yarn watch
-```
-Or use `yarn start` for start dev server with show stat warnings
-
-To build the final file use
-```bash
-yarn build
-```
-
-The finished `index.html` file is waiting for you in the `dist` folder
-
-#### Assets Loading
-Resource loading is declared in `js/PreloaderScene.js`
-`import filenameCustom from '../img/filename.png'` or `import filenameCustom from '../audio/filename.mp3'` for each asset
-
-##### Load Image
-Use `app.loader.add("custom_name", filenameCustom)` function to load images
+## Резюмируя:
+Это тестовое задание дало мне замечательный опыт и почву для размышлений о подходе к задачам такого плана.
+Отдаю себе отчет, что при полном понимании и соответствующих компетенциях именно в разработке Playable ADS, работа вполне могла бы занять максимум 2 дня.
+Поняла что для разработки нужно упрощать некоторые моменты или более статично/фиксированно, а не делать их "на будущее"/пытаться повторить логику в игре - это не имеет особого смысла, так как теряется много времени на это, а так же больше кода - больше вес итогового файла.
