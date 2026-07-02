@@ -31,3 +31,7 @@ export const PALETTE = {
 }
 
 export const INTERACTIVE_LEVEL = LEVELS[3].level;
+export const COLORS = {
+    index: [182, 175, 173],
+    colors: ["#F6B64E", "#EA831D", "#D8501D"],
+}

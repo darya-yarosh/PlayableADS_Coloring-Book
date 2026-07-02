@@ -5,7 +5,8 @@ import { gsap } from "gsap";
 
 import handSrc from "../img/interface/Hand.png";
 import { FONT_FAMILY } from '../constants/font';
-import { INTERACTIVE_LEVEL, LEVELS, PALETTE } from '../constants/levels';
+import { COLORS, INTERACTIVE_LEVEL, LEVELS, PALETTE } from '../constants/levels';
+import { findFreeSpaceForNumber } from './utils';
 
 export default class Level {
     constructor(application, params = {}) {
@@ -25,25 +26,6 @@ export default class Level {
             this.app.stage.removeChildren();
             this.startGame();
         }
-    }
-
-    calculateAreaCenter(element) {
-        let totalPoints = 0;
-        let avgX = 0;
-        let avgY = 0;
-        const step = 1;
-
-        for (let dist = 0; dist < element.getTotalLength(); dist += step) {
-            const point = element.getPointAtLength(dist);
-            avgX += point.x;
-            avgY += point.y;
-            totalPoints++;
-        }
-
-        const centerX = avgX / totalPoints;
-        const centerY = avgY / totalPoints;
-
-        return {x: centerX, y: centerY};
     }
 
     drawNumbersInAreas() {
@@ -71,30 +53,26 @@ export default class Level {
         const originalSvgHeight = this.svgElement.viewBox.baseVal.height;
         const scaleX = svgRect.width / originalSvgWidth;
         const scaleY = svgRect.height / originalSvgHeight;
-        
         const pictureWrap = this.app.stage.children.find((c) => c.name === "picture");
 
         let numberElements = [];
-
-        const specialColors = [14, 16, 18];
-        const specialIndexes = [173, 175, 182];
         
         try {
-            const createNumberContent = (part, partIndex) => {
+            const createNumberContent = (part, index) => {
                 const color = this.getElementColor(part);
                 if (!color) {
                     return;
                 }
                 
                 const number = arrayColors.findIndex((arrayEl) => arrayEl[0] === color);
-                if (number === -1 || !specialColors.includes(number + 1)) {
+                if (number === -1) {
                     return;
                 }
 
-                const { x, y } = this.calculateAreaCenter(part);
+                const { x, y } = findFreeSpaceForNumber(part);
                 
-                const scaledX = x * scaleX;
-                const scaledY = y * scaleY;
+                const scaledX = x * scaleX - 4;
+                const scaledY = y * scaleY - 4;
 
                 const bbox = part.getBBox();
                 function calculateFontSize(bbox, scaleX, scaleY) {
@@ -118,7 +96,7 @@ export default class Level {
 
                 const fontSize = calculateFontSize(bbox, scaleX, scaleY);
                 
-                const numberText = new PIXI.Text(number + 1, {
+                const numberText = new PIXI.Text(index + 1, {
                     fontFamily: FONT_FAMILY,
                     fontWeight: 600,
                     fontSize: 6,
@@ -130,15 +108,16 @@ export default class Level {
                 numberText.y = scaledY;
                 
                 pictureWrap?.children?.[1]?.addChild(numberText);
-                if (partIndex === specialIndexes[0]) {
+                if (index === 0) {
                     this.firstAreaBox = bbox;
+                    part.setAttribute("id", "firstColor");
                 }
                 return numberText;
             };
 
             const coloredElements = this.getColoredElements(this.svgElement);
-            specialIndexes.forEach((indexValue, index) => {
-                createNumberContent(coloredElements[indexValue], indexValue);
+            COLORS.index.forEach((indexValue, index) => {
+                createNumberContent(coloredElements[indexValue], index);
             });
 
             document.body.removeChild(this.svgElement);
@@ -159,7 +138,28 @@ export default class Level {
         const entries = Array.from(colors.entries());
 
         entries.sort((a, b) => b[1] - a[1]);
-        return new Map(entries);
+
+        const priorityValues = COLORS.colors;
+    
+        const priorityEntries = [];
+        const remainingEntries = [];
+        
+        for (const entry of entries) {
+            const colorCode = entry[0];
+            const priorityIndex = priorityValues.indexOf(colorCode);
+            
+            if (priorityIndex !== -1) {
+                priorityEntries[priorityIndex] = entry;
+            } else {
+                remainingEntries.push(entry);
+            }
+        }
+        
+        const finalEntries = [
+            ...priorityEntries.filter(entry => entry !== undefined),
+            ...remainingEntries
+        ];
+        return new Map(finalEntries);
     }
 
     getColoredElements(element) {
@@ -234,7 +234,6 @@ export default class Level {
             part.classList.add("uncolored");
             part.addEventListener("click", () => {
                 const partColor = this.getElementColor(part);
-                console.log("click", this.selectedColor, partColor);
 
                 if (partColor !== this.selectedColor || !part.classList.contains("uncolored")) {
                     return;
@@ -343,8 +342,7 @@ export default class Level {
             return;
         }
 
-        // this.colors = this.sortColors(this.getFormattedColors(this.svgElement));
-        this.colors = this.getFormattedColors(this.svgElement);
+        this.colors = this.sortColors(this.getFormattedColors(this.svgElement));
     }
 
     drawColorCircle(color, count, index) {
@@ -438,6 +436,7 @@ export default class Level {
             width: width,
             height: height,
             type: 'horizontal',
+            shiftScroll: true,
             items: items,
             padding: padding,
             elementsMargin: PALETTE.gap,
@@ -489,7 +488,7 @@ export default class Level {
             const firstColor = this.findPaletteFirstColor("colorFirst");
             
             if (firstColor) {
-                // MARK
+                // MARK 1
                 hand.x = firstColor.worldTransform.tx + firstColor.width / 1.75;
                 hand.y = firstColor.worldTransform.ty + firstColor.height / 2.75;
                 hand.anchor.set(0, 0);
@@ -564,12 +563,56 @@ export default class Level {
                 });
             };
 
-            const areaFirstX = this.app.screen.width / 2;
-            const areaFirstY = this.app.screen.height / 2;
-            moveHand(areaFirstX, areaFirstY);
-
             const pictureWrap = this.app.stage.children.find((c) => c.name === "picture");
             const picture = pictureWrap?.children?.[1] || null;
+
+            let fX = 0;
+            let fY = 0;
+            let fScaleX = 1;
+            let fScaleY = 1;
+            let initX = this.firstAreaBox.x;
+            let initY = this.firstAreaBox.y;
+            let initPivotY = picture.pivot.y;
+            let ended = false;
+            
+            const activateInteractiveForArea = () => {
+                picture.on("pointerdown", (e) => {
+                    const { x, y } = e.data.global;
+                    const difference = 100;
+                    const xPointInArea = x > this.firstAreaBox.x - difference && x < this.firstAreaBox.x + difference;
+                    const yPointInArea = y > this.firstAreaBox.y - difference && y < this.firstAreaBox.y + difference;
+
+                    const isClickedAreaAndFilled = yPointInArea && xPointInArea;
+                    
+                    if (isClickedAreaAndFilled) {
+                        const firstColorAreaElement = this.svgElement.querySelector("[id='firstColor']");
+                        if (firstColorAreaElement) {
+                            firstColorAreaElement.classList.remove("uncolored");
+                        }
+
+                        const resource = new PIXI.SVGResource(this.svgElement.outerHTML);
+                        const baseTexture = new PIXI.BaseTexture(resource);
+                        const texture = new PIXI.Texture(baseTexture);
+                        picture.children[0].texture = new PIXI.Texture(texture);
+
+                        const secondColor = this.findPaletteFirstColor("colorSecond");
+                        if (!secondColor) {
+                            return;
+                        }
+
+                        const x = secondColor.worldTransform.tx + secondColor.width / 1.75;
+                        const y = secondColor.worldTransform.ty + secondColor.height / 2.75;
+                        moveHand(x, y);
+                        secondColor.on("pointerdown", () => {
+                            const areaSecondX = 0;
+                            const areaSecondY = 0;
+                            moveHand(areaSecondX, areaSecondY)
+
+                            this.configureDefaultInteractive();
+                        });
+                    }
+                 })
+            }
 
             const zoomArea = () => {
                 if (!picture) {
@@ -588,53 +631,33 @@ export default class Level {
                         picture.scale.y += 0.05 * delta;
 
                         picture.pivot.y += delta * 2;
+                        fY += delta * 2;
+                        fScaleX += 0.05 * delta;
+                        fScaleY += 0.05 * delta;
                     } else {
+                        if (!ended) {
+                            ended = true;
+                            this.firstAreaBox = {
+                                x: this.isVertical 
+                                    ? this.app.view.offsetLeft + pictureWrap.x - initX * fScaleX * 0.1
+                                    : this.app.view.offsetLeft + pictureWrap.x + initX * fScaleX * 2 * 0.1,
+                                y: this.isVertical 
+                                    ? this.app.view.offsetTop + pictureWrap.y + picture.pivot.y * 0.1 + (initY - initY * fScaleY * 2 * 0.1)
+                                    : this.app.view.offsetTop + pictureWrap.y + picture.pivot.y * 0.1 + (initY * 0.1),
+                            }
+
+                            const areaFirstX = this.firstAreaBox.x;
+                            const areaFirstY = this.firstAreaBox.y;
+                            moveHand(areaFirstX, areaFirstY);
+                            activateInteractiveForArea();
+                        }
                         picture.ticker?.remove(this);
                     }
                 });
             }
 
             zoomArea();
-
-            const activateInteractiveForArea = () => {
-                console.log("A", picture);
-                picture.on("pointerdown", (e) => {
-                    console.log(e, this.firstAreaBox);
-                })
-                const isClickedAreaAndFilled = true;
-                
-                 if (isClickedAreaAndFilled) {
-                    const secondColor = this.findPaletteFirstColor("colorSecond");
-                    if (!secondColor) {
-                        return;
-                    }
-
-                    const x = secondColor.worldTransform.tx + secondColor.width / 1.75;
-                    const y = secondColor.worldTransform.ty + secondColor.height / 2.75;
-                    moveHand(x, y);
-                    secondColor.on("pointerdown", () => {
-                        const areaSecondX = 0;
-                        const areaSecondY = 0;
-                        moveHand(areaSecondX, areaSecondY)
-
-                        this.configureDefaultInteractive();
-                    });
-                 }
-            }
-
-            setTimeout(() => {
-                activateInteractiveForArea();
-            }, 1000);
         })
-                
-        /*
-        if (клик произошел на первом цвете палитры ) {
-            удалить tapToClickText
-            приблизить камеру на кусок картинки
-            заменить текстуру уровня с безцифровой на цифровую
-            
-        }
-        */
     }
 
     configureDefaultInteractive() {
@@ -671,7 +694,9 @@ export default class Level {
         this.drawPalette();
 
         this.drawText();
-        this.drawHand();
+        setTimeout(() => {
+            this.drawHand();
+        }, 0);
 ``
         this.configureInteractive();
     }
