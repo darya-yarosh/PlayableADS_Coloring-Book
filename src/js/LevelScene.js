@@ -7,7 +7,7 @@ import { gsap } from "gsap";
 import handSrc from "../img/interface/Hand.png";
 import { FONT_FAMILY } from '../constants/font';
 import { COLORS, INTERACTIVE_LEVEL, LEVELS, PALETTE } from '../constants/levels';
-import { findFreeSpaceForNumber } from './utils';
+import { createTextureFromHTMLElement, findFreeSpaceForNumber, formatPictureToElement } from './utils';
 
 export default class Level {
     constructor(application, params = {}) {
@@ -101,12 +101,15 @@ export default class Level {
                     fontFamily: FONT_FAMILY,
                     fontWeight: 600,
                     fontSize: 6,
+                    antialias: true,
+                    resolution: Math.min(window.devicePixelRatio || 1, 2),
                     x: scaledX,
                     y: scaledY,
                     color: "black",
                 });
                 numberText.x = scaledX;
                 numberText.y = scaledY;
+                numberText.roundPixels = true;
                 
                 pictureWrap?.children?.[1]?.addChild(numberText);
                 if (index === 0) {
@@ -274,25 +277,9 @@ export default class Level {
 
     async formatPictureToElement() {
         const app = this.app;
-
-        const svgResult = await fetch(app.svgLevels[this.levelType]);
-        const svgText = await svgResult.text();
         const size = this.isVertical ? app.screen.width - 100 : app.screen.height - 200;
-        const styledSvg = svgText.replace(
-            '<svg',
-            `<svg style="
-                width: ${size}px; 
-                height: ${size}px;
-                position: absolute;
-                margin: auto;"
-                width="${size}" 
-                height="${size}"
-            `
-        );
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(styledSvg, 'image/svg+xml');
-        const svgElement = svgDoc.documentElement;
-
+        
+        const svgElement = await formatPictureToElement(app, this.levelType, size);
         this.setCustomStyles(svgElement);
         
         this.svgElement = svgElement;
@@ -304,18 +291,9 @@ export default class Level {
         const wrap = new Container();
         wrap.name = "picture";
         
-        const resource = new SVGResource(this.svgElement.outerHTML);
         const size = this.isVertical ? app.screen.width - 100 : app.screen.height - 200;
-        const baseTexture = new BaseTexture(resource);
-        const texture = new Texture(baseTexture);
-        
-        await new Promise((resolve) => {
-            if (baseTexture.valid) {
-                resolve();
-            } else {
-                baseTexture.once('loaded', resolve);
-            }
-        });
+
+        const texture = await createTextureFromHTMLElement(this.svgElement.outerHTML);
         
         const maskGraphics = new Graphics();
         maskGraphics.beginFill(0xffffff);
@@ -331,6 +309,8 @@ export default class Level {
         const sprite = new Sprite(texture);
         sprite.x = 0;
         sprite.y = 0;
+        sprite.roundPixels = true;
+
         wrapPicture.width = sprite.width;
         wrapPicture.height = sprite.height;
         wrapPicture.addChild(sprite);
@@ -543,14 +523,14 @@ export default class Level {
         app.stage.addChild(tapToClickText);
     }
 
-    configureSpecialInteractive() {
+    async configureSpecialInteractive() {
         const firstColor = this.findPaletteFirstColor("colorFirst");
         if (!firstColor) {
             return;
         }
 
         let isFirstClicked = false;
-        const onClickFirstColor = () => {
+        const onClickFirstColor = async () => {
             firstColor.off("pointerdown", onClickFirstColor);
 
             this.selectedColor = firstColor.color;
@@ -583,8 +563,8 @@ export default class Level {
             let initPivotY = picture.pivot.y;
             let ended = false;
             
-            const activateInteractiveForArea = () => {
-                const onClickPicture = (e) => {
+            const activateInteractiveForArea = async () => {
+                const onClickPicture = async (e) => {
                     const { x, y } = e.data.global;
                     const difference = 100;
                     const xPointInArea = x > this.firstAreaBox.x - difference && x < this.firstAreaBox.x + difference;
@@ -600,10 +580,7 @@ export default class Level {
                             firstColorAreaElement.classList.remove("uncolored");
                         }
 
-                        const resource = new SVGResource(this.svgElement.outerHTML);
-                        const baseTexture = new BaseTexture(resource);
-                        const texture = new Texture(baseTexture);
-                        picture.children[0].texture = new Texture(texture);
+                        picture.children[0].texture = await createTextureFromHTMLElement(this.svgElement.outerHTML);
 
                         const secondColor = this.findPaletteFirstColor("colorSecond");
                         if (!secondColor) {
@@ -630,18 +607,16 @@ export default class Level {
                 picture.on("pointerdown", onClickPicture);
             }
 
-            const zoomArea = () => {
+            const zoomArea = async () => {
                 if (!picture) {
                     return;
                 }
 
                 picture.interactive = true;
-                const resource = new SVGResource(this.svgElement.outerHTML);
-                const baseTexture = new BaseTexture(resource);
-                const texture = new Texture(baseTexture);
-                picture.texture = new Texture(texture);
+                let x = picture.scale.x;
+                picture.texture = await createTextureFromHTMLElement(this.svgElement.outerHTML);
                 
-                this.app.ticker.add((delta) => {
+                this.app.ticker.add(async (delta) => {
                     if (picture.scale.x < 3) {
                         picture.scale.x += 0.05 * delta;
                         picture.scale.y += 0.05 * delta;
@@ -654,25 +629,22 @@ export default class Level {
                         if (!ended) {
                             ended = true;
                             this.firstAreaBox = {
-                                x: this.isVertical 
-                                    ? this.app.view.offsetLeft + pictureWrap.x
-                                    : this.app.view.offsetLeft + pictureWrap.x + 100,
-                                y: this.isVertical 
-                                    ? this.app.view.offsetTop + pictureWrap.y + 240
-                                    : this.app.view.offsetTop + pictureWrap.y + 40,
+                                x: this.app.view.offsetLeft + pictureWrap.x + (this.firstAreaBox.x * (0.1 * (fScaleX - 1))),
+                                y: this.app.view.offsetTop + pictureWrap.y + ((this.firstAreaBox.y) * (0.1 * fScaleY)) + picture.pivot.y,
                             }
 
+                            console.log(this.app.view.offsetTop, pictureWrap.y, picture.pivot.y);
                             const areaFirstX = this.firstAreaBox.x;
                             const areaFirstY = this.firstAreaBox.y;
                             moveHand(areaFirstX, areaFirstY);
-                            activateInteractiveForArea();
+                            await activateInteractiveForArea();
                         }
                         picture.ticker?.remove(this);
                     }
                 });
             }
 
-            zoomArea();
+            await zoomArea();
         };
 
         firstColor.on("pointerdown", onClickFirstColor)
@@ -692,9 +664,9 @@ export default class Level {
         })
     }
 
-    configureInteractive() {
+    async configureInteractive() {
         if (this.levelType === INTERACTIVE_LEVEL) {
-            this.configureSpecialInteractive();
+            await this.configureSpecialInteractive();
         } else {
             this.configureDefaultInteractive();
         }
@@ -716,6 +688,6 @@ export default class Level {
             this.drawHand();
         }, 0);
 
-        this.configureInteractive();
+        await this.configureInteractive();
     }
 }

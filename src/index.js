@@ -1,4 +1,4 @@
-import { Application } from 'pixi.js';
+import { Application, settings, SCALE_MODES } from 'pixi.js';
 
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
@@ -13,10 +13,12 @@ const verticalSize = [width, height];
 const horizontalSize = [height, width];
 const currentSize = isLandscape ? horizontalSize : verticalSize;
 
+settings.RESOLUTION = Math.min(window.devicePixelRatio || 1, 2);
+
 const app = new Application({
     width: currentSize[0],
     height: currentSize[1],
-    resolution: window.devicePixelRatio || 1,
+    resolution: Math.min(window.devicePixelRatio || 1, 2),
     autoDensity: true,
     antialias: true,
     background: 0xEDE8E5
@@ -30,10 +32,10 @@ const preloader = new Preloader(app);
 await preloader.startLoad();
 
 const game = new Main(app);
-game.startGame();
 export const STATE = {
     currentPage: game,
 };
+await game.startGame();
 
 function resize() {
     const isLandscape = window.innerWidth > window.innerHeight;

@@ -5,7 +5,7 @@ import { PixiPlugin } from "gsap/PixiPlugin";
 
 import { FONT_FAMILY } from '../constants/font';
 import { LEVEL_COUNT, LEVELS } from '../constants/levels';
-import { goToLevel } from './utils';
+import { createTextureFromHTMLElement, formatPictureToElement, goToLevel } from './utils';
 
 export default class Main {
     constructor (application) {
@@ -39,9 +39,8 @@ export default class Main {
         this.app.stage.addChild(headerText);
     }
 
-    createLevelCell(x, y, data, width, height) {
+    async createLevelCell(x, y, data, width, height) {
         const {
-            cover: texture, 
             label,
             level,
         } = data;
@@ -59,6 +58,8 @@ export default class Main {
         maskSprite.x = 0;
         maskSprite.y = 0;
 
+        const svgElement = await formatPictureToElement(this.app, level, width);
+        const texture = await createTextureFromHTMLElement(svgElement.outerHTML);
         const innerSprite = Sprite.from(texture);
         innerSprite.width = width;
         innerSprite.height = height;
@@ -84,12 +85,13 @@ export default class Main {
 
         wrap.x = x;
         wrap.y = y;
+        console.log(x);
         
         innerSprite.eventMode = 'static';
         innerSprite.cursor = 'pointer';
-        innerSprite.interactive = true;
-        innerSprite.on("pointerdown", () => {
-            goToLevel(this.app, level);
+        innerSprite.dynamic = true;
+        innerSprite.on("pointerdown", async () => {
+            await goToLevel(this.app, level);
         })
 
         return wrap;
@@ -111,7 +113,7 @@ export default class Main {
         }
     }
     
-    drawLevelsList() {
+    async drawLevelsList() {
         const wrap = new Container();
         wrap.name = "levelsList";
 
@@ -123,7 +125,7 @@ export default class Main {
         const cellHeight = size;
         
         const gap = 20;
-        spiralledLevels.forEach((level, index) => {
+        const promises = spiralledLevels.map(async (level, index) => {
             const {
                 row,
                 col,
@@ -132,11 +134,14 @@ export default class Main {
             const x = col * (gap + cellWidth);
             const y = row * (gap + cellHeight);
 
-            const cell = this.createLevelCell(x, y, data, cellWidth, cellHeight);
+            const cell = await this.createLevelCell(x, y, data, cellWidth, cellHeight);
             wrap.addChild(cell);
-        })
+        });
 
-        wrap.y = this.isVertical ? 200 : 150;
+        await Promise.all(promises);
+
+
+        wrap.y = this.isVertical ? 300 : 150;
         wrap.x = this.app.screen.width / 2 - wrap.width / 2;
         this.app.stage.addChild(wrap);
     }
@@ -257,11 +262,11 @@ export default class Main {
         this.app.stage.addChild(footerText);
     }
 
-    startGame() {
+    async startGame() {
         console.log('%c  %c MainScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
 
         this.drawHeader();
-        this.drawLevelsList();
+        await this.drawLevelsList();
         this.drawHand();
         this.drawFooter();
     }

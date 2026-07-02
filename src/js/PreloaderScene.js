@@ -4,10 +4,7 @@ import { Assets } from 'pixi.js';
 import hand from "../img/interface/Hand.png";
 import cell from "../img/interface/ImageFrame.png";
 import cellCircle from "../img/interface/UI_CircleElements.png";
-// import coverA from "../img/covers/Anime.png";
-// import coverB from "../img/covers/Animals.png";
-// import coverC from "../img/covers/Fantasy.png";
-// import coverD from "../img/covers/Mandalas.png";
+
 import labelA from "../img/covers/Label_Anime.png";
 import labelB from "../img/covers/Label_Animals.png";
 import labelC from "../img/covers/Label_Fantasy.png";
@@ -39,17 +36,17 @@ export default class Preloader {
     }
 
     async loadPNG() {
-        Assets.add('hand', hand);
-        Assets.add('cell', cell);
-        Assets.add('cellCircle', cellCircle);
-        Assets.add('coverA', levelA);
-        Assets.add('coverB', levelB);
-        Assets.add('coverC', levelC);
-        Assets.add('coverD', levelD);
-        Assets.add('labelA', labelA);
-        Assets.add('labelB', labelB);
-        Assets.add('labelC', labelC);
-        Assets.add('labelD', labelD);
+        Assets.add({alias: 'hand', src: hand});
+        Assets.add({alias: 'cell', src: cell});
+        Assets.add({alias: 'cellCircle', src: cellCircle});
+        Assets.add({alias: 'coverA', src: levelA});
+        Assets.add({alias: 'coverB', src: levelB});
+        Assets.add({alias: 'coverC', src: levelC});
+        Assets.add({alias: 'coverD', src: levelD});
+        Assets.add({alias: 'labelA', src: labelA});
+        Assets.add({alias: 'labelB', src: labelB});
+        Assets.add({alias: 'labelC', src: labelC});
+        Assets.add({alias: 'labelD', src: labelD});
 
         await Assets.load([
             'hand', 'cell', 'cellCircle',
@@ -64,10 +61,10 @@ export default class Preloader {
         try {
             const resolution = 1;
 
-            Assets.add('levelA', levelA);
-            Assets.add('levelB', levelB);
-            Assets.add('levelC', levelC);
-            Assets.add('levelD', levelD);
+            Assets.add({alias: 'levelA', src: levelA});
+            Assets.add({alias: 'levelB', src: levelB});
+            Assets.add({alias: 'levelC', src: levelC});
+            Assets.add({alias: 'levelD', src: levelD});
 
             const textures = await Assets.load([
                 { src: 'levelA', data: { resolution } },
