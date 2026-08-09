@@ -1,5 +1,7 @@
 import { Assets } from "pixi.js";
+
 import { COLORS } from "../constants/levels";
+
 import { formatPictureToElement } from "./utils";
 import { initColors } from "./utils/colors";
 

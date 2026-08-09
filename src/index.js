@@ -1,7 +1,7 @@
 import { Application, extensions, SCALE_MODES, TickerPlugin } from 'pixi.js';
-
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
+
 import Preloader from "./js/PreloaderScene.js";
 import Main from './js/MainScene.js';
 

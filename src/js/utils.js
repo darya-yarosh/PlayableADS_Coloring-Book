@@ -1,7 +1,8 @@
 import { Texture, ImageSource, CanvasSource, Assets  } from "pixi.js";
 
-import Level from "./LevelScene";
 import { STATE } from "..";
+
+import Level from "./LevelScene";
 
 export const formatPictureToElement = async (app, levelType, size, isPositioned = true) =>{
     const svgResult = await fetch(app.svgLevels[levelType]);

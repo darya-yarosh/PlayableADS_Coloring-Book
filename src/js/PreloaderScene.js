@@ -97,24 +97,18 @@ export default class Preloader {
                 typeC: textureC,
                 typeD: textureD,
             }
-
-            console.log('✅ SVG загружены');
         } catch (e) {
             console.warn('⚠️ Ошибка загрузки SVG:', e);
         }
     }
 
     async startLoad() {
-        console.log('%c  %c PreloaderScene ', 'background:#d6cc28', 'color: #d6cc28; background: #000; font-size:10pt');
-
         try {
             await Promise.all([
                 this.loadFont(),
                 this.loadPNG(),
                 this.loadSVG()
             ]);
-
-            console.log('✅ Все ресурсы загружены');
             
             return new Promise((resolve) => {
                 resolve();

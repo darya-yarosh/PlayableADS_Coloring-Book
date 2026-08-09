@@ -5,9 +5,11 @@ import { PixiPlugin } from "gsap/PixiPlugin";
 
 import { FONT_FAMILY } from '../constants/font';
 import { LEVEL_COUNT, LEVELS } from '../constants/levels';
-import { goToLevel } from './utils';
 import { FRAME_PADDING, RESOLUTION } from '../constants/assets';
+
+import { goToLevel } from './utils';
 import { initColors } from './utils/colors';
+
 import LevelTexture from './LevelTexture';
 
 export const PRELOADED_LEVELS = {};
@@ -19,8 +21,6 @@ export default class Main {
     }
 
     handleResize(isLandscape) {
-        console.log(`Game resized to ${isLandscape ? 'landscape' : 'portrait'}`);
-
         if (this.app) {
             this.isVertical = !isLandscape;
             this.app.stage.removeChildren();
@@ -163,7 +163,7 @@ export default class Main {
         let index = 0;
         
         while (top <= bottom && left <= right) {
-            // Верхняя строка (слева → направо)
+            // Top row (from left to right)
             for (let i = left; i <= right; i++) {
                 cells.push({
                     row: top,
@@ -173,7 +173,7 @@ export default class Main {
             }
             top++;
             
-            // Правый столбец (сверху → вниз)
+            // Right column (from top to bottom)
             for (let i = top; i <= bottom; i++) {
                 cells.push({
                     row: i,
@@ -183,7 +183,7 @@ export default class Main {
             }
             right--;
             
-            // Нижняя строка (справа → налево)
+            // Bottom row (from right to left)
             if (top <= bottom) {
                 for (let i = right; i >= left; i--) {
                     cells.push({
@@ -195,7 +195,7 @@ export default class Main {
                 bottom--;
             }
             
-            // Левый столбец (снизу → вверх)
+            // Left column (from bottom to top)
             if (left <= right) {
                 for (let i = bottom; i >= top; i--) {
                     cells.push({
@@ -289,8 +289,6 @@ export default class Main {
     }
 
     async startGame() {
-        console.log('%c  %c MainScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
-
         this.drawHeader();
         await this.drawLevelsList();
         this.drawHand();

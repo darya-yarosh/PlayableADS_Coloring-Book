@@ -1,15 +1,16 @@
 import { Assets, BaseTexture, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
-
 import { gsap } from "gsap";
 
 import { FONT_FAMILY } from '../constants/font';
-import { COLORS, INTERACTIVE_LEVEL, LEVELS, PALETTE } from '../constants/levels';
-import { createTextureFromHTMLElement } from './utils';
 import { RESOLUTION } from '../constants/assets';
-import { PRELOADED_LEVELS } from './MainScene';
+import { COLORS, INTERACTIVE_LEVEL, LEVELS, PALETTE } from '../constants/levels';
+
+import { createTextureFromHTMLElement } from './utils';
 import { calculateFontSize, findFreeSpaceForNumber } from './utils/area';
-import LevelTexture from './LevelTexture';
 import { getColoredElements, getElementColor } from './utils/colors';
+
+import { PRELOADED_LEVELS } from './MainScene';
+import LevelTexture from './LevelTexture';
 
 export default class Level {
     constructor(application, params = {}) {
@@ -26,8 +27,6 @@ export default class Level {
     }
 
     handleResize(isLandscape) {
-        console.log(`Game resized to ${isLandscape ? 'landscape' : 'portrait'}`);
-
         if (this.app) {
             this.isVertical = !isLandscape;
             this.app.stage.removeChildren();
@@ -317,7 +316,6 @@ export default class Level {
             const firstColor = this.findPaletteColor("colorFirst");
             
             if (firstColor) {
-                // MARK 1
                 hand.x = firstColor.worldTransform.tx + firstColor.width / 1.75;
                 hand.y = firstColor.worldTransform.ty + firstColor.height / 2.75;
                 hand.anchor.set(0, 0);
@@ -455,7 +453,6 @@ export default class Level {
                 textureWrap.interactive = true;
 
                 const tickerLogic = async (ticker) => {
-                    console.log("tick");
                     const delta = ticker.deltaMS * 0.05;
                     const coeff = 0.05;
 
@@ -473,7 +470,6 @@ export default class Level {
                             const numf = pictureWrap.children[1].children[1];
                             await moveHand(numf.worldTransform.tx, numf.worldTransform.ty);
 
-                            // TODO: optimize again this...
                             await activateInteractiveForArea();
                         }
                     }
@@ -517,28 +513,16 @@ export default class Level {
     async startGame() {
         const app = this.app;
         let startData = new Date().getMilliseconds(); 
-        console.log('%c  %c LevelScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
 
-        startData = new Date().getMilliseconds() - startData;
-        console.log(2, startData);
         this.initSelectedColor();
-        startData = new Date().getMilliseconds() - startData;
-        console.log(3, startData);
         this.drawPicture();
-        startData = new Date().getMilliseconds() - startData;
-        console.log(4, startData);
         this.drawNumbersInAreas();
-        startData = new Date().getMilliseconds() - startData;
-        console.log(5, startData);
         this.drawPalette();
-        startData = new Date().getMilliseconds() - startData;
-        console.log(6, startData);
 
         this.drawText();
         setTimeout(() => {
             this.drawHand();
         }, 0);
-
 
         const firstColorAreaElement = this.svgElement.querySelector("[id='firstColor']");
         if (firstColorAreaElement) {
