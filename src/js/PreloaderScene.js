@@ -18,6 +18,8 @@ import levelD from "../img/levels/Mandalas.svg";
 
 // Font
 import font from "../fonts/Poppins.woff2";
+import { FONT_FAMILY } from '../constants/font';
+import { RESOLUTION, SETTINGS_PNG_RESOURCE, SETTINGS_SVG_RESOURCE } from '../constants/assets';
 
 let app;
 
@@ -28,25 +30,33 @@ export default class Preloader {
 
     async loadFont() {
         await Assets.load({
+            alias: FONT_FAMILY,
             src: font,
             data: {
-                family: "Poppins",
+                family: FONT_FAMILY,
+                format: 'woff2'
             }
         });
     }
 
     async loadPNG() {
-        Assets.add({alias: 'hand', src: hand});
-        Assets.add({alias: 'cell', src: cell});
-        Assets.add({alias: 'cellCircle', src: cellCircle});
-        Assets.add({alias: 'coverA', src: levelA});
-        Assets.add({alias: 'coverB', src: levelB});
-        Assets.add({alias: 'coverC', src: levelC});
-        Assets.add({alias: 'coverD', src: levelD});
-        Assets.add({alias: 'labelA', src: labelA});
-        Assets.add({alias: 'labelB', src: labelB});
-        Assets.add({alias: 'labelC', src: labelC});
-        Assets.add({alias: 'labelD', src: labelD});
+        const data = SETTINGS_PNG_RESOURCE;
+        const svgData = {
+            ...data,
+            resolution: RESOLUTION.img
+        };
+
+        Assets.add({alias: 'hand', src: hand, data});
+        Assets.add({alias: 'cell', src: cell, data});
+        Assets.add({alias: 'cellCircle', src: cellCircle, data});
+        Assets.add({alias: 'coverA', src: levelA, data: svgData});
+        Assets.add({alias: 'coverB', src: levelB, data: svgData});
+        Assets.add({alias: 'coverC', src: levelC, data: svgData});
+        Assets.add({alias: 'coverD', src: levelD, data: svgData});
+        Assets.add({alias: 'labelA', src: labelA, data});
+        Assets.add({alias: 'labelB', src: labelB, data});
+        Assets.add({alias: 'labelC', src: labelC, data});
+        Assets.add({alias: 'labelD', src: labelD, data});
 
         await Assets.load([
             'hand', 'cell', 'cellCircle',
@@ -59,25 +69,33 @@ export default class Preloader {
 
     async loadSVG() {
         try {
-            const resolution = 1;
+            const data = SETTINGS_SVG_RESOURCE;
 
-            Assets.add({alias: 'levelA', src: levelA});
-            Assets.add({alias: 'levelB', src: levelB});
-            Assets.add({alias: 'levelC', src: levelC});
-            Assets.add({alias: 'levelD', src: levelD});
-
-            const textures = await Assets.load([
-                { src: 'levelA', data: { resolution } },
-                { src: 'levelB', data: { resolution } },
-                { src: 'levelC', data: { resolution } },
-                { src: 'levelD', data: { resolution } }
-            ]);
+            const textureA = await Assets.load(
+                { src: levelA, data } 
+            );
+            const textureB = await Assets.load(
+                { src: levelB, data }
+            )
+            const textureC = await Assets.load(
+                { src: levelC, data }
+            )
+            const textureD = await Assets.load(
+                { src: levelD, data }
+            )
 
             app.svgLevels = {
                 typeA: levelA,
                 typeB: levelB,
                 typeC: levelC,
                 typeD: levelD,
+            }
+
+            app.svgTextures = {
+                typeA: textureA,
+                typeB: textureB,
+                typeC: textureC,
+                typeD: textureD,
             }
 
             console.log('✅ SVG загружены');
