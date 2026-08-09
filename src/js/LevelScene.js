@@ -1,13 +1,15 @@
-import { BaseTexture, Container, Graphics, Sprite, SVGResource, Text, Texture } from 'pixi.js';
+import { Assets, BaseTexture, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 
-import { Assets } from '@pixi/assets';
-import { ScrollBox } from '@pixi/ui';
 import { gsap } from "gsap";
 
-import handSrc from "../img/interface/Hand.png";
 import { FONT_FAMILY } from '../constants/font';
 import { COLORS, INTERACTIVE_LEVEL, LEVELS, PALETTE } from '../constants/levels';
-import { createTextureFromHTMLElement, findFreeSpaceForNumber, formatPictureToElement } from './utils';
+import { createTextureFromHTMLElement } from './utils';
+import { RESOLUTION } from '../constants/assets';
+import { PRELOADED_LEVELS } from './MainScene';
+import { calculateFontSize, findFreeSpaceForNumber } from './utils/area';
+import LevelTexture from './LevelTexture';
+import { getColoredElements, getElementColor } from './utils/colors';
 
 export default class Level {
     constructor(application, params = {}) {
@@ -15,8 +17,12 @@ export default class Level {
         this.levelType = params.levelType;
         this.isVertical = this.app?.screen?.width ? this.app.screen.width < this.app.screen.height : true;
         this.selectedColor = null;
-        this.svgElement = null;
-        this.colors = null;
+        
+        const { svgElement, colors, texture } = PRELOADED_LEVELS[this.levelType];
+
+        this.svgElement = svgElement;
+        this.colors = colors;
+        this.texture = texture;
     }
 
     handleResize(isLandscape) {
@@ -54,13 +60,13 @@ export default class Level {
         const originalSvgHeight = this.svgElement.viewBox.baseVal.height;
         const scaleX = svgRect.width / originalSvgWidth;
         const scaleY = svgRect.height / originalSvgHeight;
-        const pictureWrap = this.app.stage.children.find((c) => c.name === "picture");
+        const pictureWrap = this.app.stage.children.find((c) => c.label === "picture");
 
         let numberElements = [];
-        
+
         try {
             const createNumberContent = (part, index) => {
-                const color = this.getElementColor(part);
+                const color = getElementColor(part, this.svgElement);
                 if (!color) {
                     return;
                 }
@@ -76,36 +82,21 @@ export default class Level {
                 const scaledY = y * scaleY - 4;
 
                 const bbox = part.getBBox();
-                function calculateFontSize(bbox, scaleX, scaleY) {
-                    const areaWidth = bbox.width * scaleX;
-                    const areaHeight = bbox.height * scaleY;
-                    
-                    const diagonal = Math.sqrt(areaWidth * areaWidth + areaHeight * areaHeight);
-                    
-                    const fillFactor = 0.35;
-                    
-                    let fontSize = diagonal * fillFactor;
-                    fontSize = Math.max(8, Math.min(fontSize, 60));
-
-                    const aspectRatio = areaWidth / areaHeight;
-                    if (aspectRatio < 0.3 || aspectRatio > 3) {
-                        fontSize *= 0.7;
-                    }
-                    
-                    return fontSize;
-                }
 
                 const fontSize = calculateFontSize(bbox, scaleX, scaleY);
                 
-                const numberText = new Text(index + 1, {
-                    fontFamily: FONT_FAMILY,
-                    fontWeight: 600,
-                    fontSize: 6,
-                    antialias: true,
-                    resolution: Math.min(window.devicePixelRatio || 1, 2),
-                    x: scaledX,
-                    y: scaledY,
-                    color: "black",
+                const numberText = new Text({
+                    text: index + 1, 
+                    style: {
+                        fontFamily: FONT_FAMILY,
+                        fontWeight: 600,
+                        fontSize: 6,
+                        antialias: true,
+                        x: scaledX,
+                        y: scaledY,
+                        color: "black",
+                    },
+                    resolution: RESOLUTION.text * 2,
                 });
                 numberText.x = scaledX;
                 numberText.y = scaledY;
@@ -113,13 +104,12 @@ export default class Level {
                 
                 pictureWrap?.children?.[1]?.addChild(numberText);
                 if (index === 0) {
-                    this.firstAreaBox = bbox;
                     part.setAttribute("id", "firstColor");
                 }
                 return numberText;
             };
 
-            const coloredElements = this.getColoredElements(this.svgElement);
+            const coloredElements = getColoredElements(this.svgElement);
             COLORS.index.forEach((indexValue, index) => {
                 createNumberContent(coloredElements[indexValue], index);
             });
@@ -138,181 +128,34 @@ export default class Level {
         this.selectedColor = Array.from(this.colors.entries())[0][0];
     }
 
-    sortColors(colors) {
-        const entries = Array.from(colors.entries());
-
-        entries.sort((a, b) => b[1] - a[1]);
-
-        const priorityValues = COLORS.colors;
-    
-        const priorityEntries = [];
-        const remainingEntries = [];
-        
-        for (const entry of entries) {
-            const colorCode = entry[0];
-            const priorityIndex = priorityValues.indexOf(colorCode);
-            
-            if (priorityIndex !== -1) {
-                priorityEntries[priorityIndex] = entry;
-            } else {
-                remainingEntries.push(entry);
-            }
-        }
-        
-        const finalEntries = [
-            ...priorityEntries.filter(entry => entry !== undefined),
-            ...remainingEntries
-        ];
-        return new Map(finalEntries);
-    }
-
-    getColoredElements(element) {
-        return element.querySelectorAll("[fill], [class], [style]");
-    }
-
-    getElementColor(element) {
-        if (!element) {
-            return null;
-        }
-
-        const attributeColor = element.getAttribute("fill");
-        if (attributeColor) {
-            return attributeColor;
-        }
-
-        const styleColor = element.style.fill;
-        if (styleColor) {
-            return styleColor;
-        }
-
-        const styleElements = this.svgElement.querySelectorAll("style");
-        let foundColor = null;
-        
-        const className = element.getAttribute("class");
-        if (className) {
-            for (let styleEl of styleElements) {
-                const styleText = styleEl.textContent;
-                
-                const classRegex = new RegExp(
-                    `\\.${className}\\s*(?::[\\w-]+)?\\s*\\{([^}]*)\\}`,
-                    'g'
-                );
-                
-                let match;
-                while ((match = classRegex.exec(styleText)) !== null) {
-                    const properties = match[1];
-                    
-                    const fillRegex = /fill\s*:\s*([^;]+);?/;
-                    const fillMatch = properties.match(fillRegex);
-                    
-                    if (fillMatch) {
-                        foundColor = fillMatch[1].trim();
-                        break;
-                    }
-                }
-                
-                if (foundColor) {
-                    break;
-                }
-            }
-        }
-
-        if (foundColor) {
-            return foundColor;
-        }
-
-        const computedStyle = window.getComputedStyle(element);
-        return computedStyle?.fill || null;
-    }
-
-    getFormattedColors(svgElement) {
-        const coloredParts = this.getColoredElements(svgElement);
-
-        const colors = new Map();
-
-        coloredParts.forEach((part) => {
-            const color = this.getElementColor(part);
-            if (color === "none" || !color) {
-                return;
-            }
-
-            const currentCount = colors.get(color) || 0;
-            colors.set(color, currentCount + 1);
-
-            part.classList.add("uncolored");
-            part.addEventListener("click", () => {
-                const partColor = this.getElementColor(part);
-
-                if (partColor !== this.selectedColor || !part.classList.contains("uncolored")) {
-                    return;
-                }
-
-                const svg = part.ownerSVGElement;
-                const pt = svg.createSVGPoint();
-                pt.x = event.clientX;
-                pt.y = event.clientY;
-
-                const ctm = part.getScreenCTM();
-                if (ctm) {
-                    const localPoint = pt.matrixTransform(ctm.inverse());
-                    
-                    const isClickInArea = part.isPointInFill(localPoint) || part.isPointInStroke(localPoint);
-                    if (isClickInArea) {
-                        part.classList.remove("uncolored");
-                    }
-                }
-            })
-        });
-
-        return colors;
-    }
-
-    setCustomStyles(svgElement) {
-        const def = document.createElement("def");
-        const style = document.createElement("style");
-        style.innerHTML = "svg { overflow: hidden; } svg >* { transition: transform 2s; } .uncolored { fill: white !important; pointer-events: visiblePainted;  } .zoomed >* { transform: scale(2); transform-origin: left; }";
-        def.appendChild(style);
-        svgElement.appendChild(def);
-    }
-
-    async formatPictureToElement() {
-        const app = this.app;
-        const size = this.isVertical ? app.screen.width - 100 : app.screen.height - 200;
-        
-        const svgElement = await formatPictureToElement(app, this.levelType, size);
-        this.setCustomStyles(svgElement);
-        
-        this.svgElement = svgElement;
-    }
-
-    async drawInitPicture() {
+    drawPicture() {
         const app = this.app;
 
         const wrap = new Container();
-        wrap.name = "picture";
-        
+        wrap.label = "picture";
         const size = this.isVertical ? app.screen.width - 100 : app.screen.height - 200;
 
-        const texture = await createTextureFromHTMLElement(this.svgElement.outerHTML);
+        const diffWidth = (this.texture * 1 / size)
+        this.diffForArea = diffWidth;
         
         const maskGraphics = new Graphics();
-        maskGraphics.beginFill(0xffffff);
-        maskGraphics.drawRect(0, 0, texture.width, texture.height);
-        maskGraphics.endFill();
+        maskGraphics.rect(0, 0, size, size);
+        maskGraphics.fill(0xffffff);
         wrap.addChild(maskGraphics);
 
         const wrapPicture = new Container();
         wrapPicture.x = 0;
         wrapPicture.y = 0;
         wrapPicture.mask = maskGraphics;
+        wrapPicture.label = "svgWrap";
 
-        const sprite = new Sprite(texture);
+        const sprite = new Sprite(this.texture);
         sprite.x = 0;
         sprite.y = 0;
+        sprite.width = size;
+        sprite.height = size;
         sprite.roundPixels = true;
 
-        wrapPicture.width = sprite.width;
-        wrapPicture.height = sprite.height;
         wrapPicture.addChild(sprite);
 
         wrap.x = app.screen.width / 2 - sprite.width / 2;
@@ -322,16 +165,9 @@ export default class Level {
         app.stage.addChild(wrap);
     }
 
-    initColors() {
-        if (!this.svgElement) {
-            return;
-        }
-
-        this.colors = this.sortColors(this.getFormattedColors(this.svgElement));
-    }
-
     drawColorCircle(color, count, index) {
         const wrap = new Container();
+        wrap.interactive = true;
 
         const circle = Sprite.from("cellCircle");
         const padding = 0;
@@ -352,10 +188,11 @@ export default class Level {
         const colorGraphic = new Graphics();
         const size = PALETTE.circle;
         
-        colorGraphic.beginFill(color);
-        colorGraphic.drawCircle(padding + size/2, padding+size/2, size/2);
-        colorGraphic.endFill();
+        colorGraphic.circle(padding + size/2, padding+size/2, size/2);
+        colorGraphic.fill(color);
         colorGraphic.mask = maskSprite;
+        colorGraphic.interactive = true;
+        colorGraphic.cursor = 'pointer';
         wrap.addChild(colorGraphic);
 
         let numberColor = "0x000";
@@ -370,18 +207,23 @@ export default class Level {
             numberColor = "0xfff";
         }
 
-        const number = new Text(`${index+1}`, {
-            fontFamily: FONT_FAMILY,
-            fontSize: 32,
-            fontWeight: 600,
-            fill: numberColor, 
-            align : 'center',
-            wordWrap: true,
-            wordWrapWidth: 200,
+        const number = new Text({
+            text: `${index+1}`, 
+            style: {
+                fontFamily: FONT_FAMILY,
+                fontSize: 32,
+                fontWeight: 600,
+                fill: numberColor, 
+                align : 'center',
+                wordWrap: true,
+                wordWrapWidth: 200,
+            },
+            resolution: RESOLUTION.text
         });
         number.anchor.set(0.5, 0.5);
-        number.x = wrap.width / 2;
-        number.y = colorGraphic.height / 2 - 2;
+        number.position.set(wrap.width / 2, colorGraphic.height / 2 - 2);
+        number.interactive = true;
+        number.cursor = 'pointer';
         wrap.addChild(number);
 
         const y = padding * 2;
@@ -407,48 +249,49 @@ export default class Level {
         const padding = this.isVertical ? PALETTE.paddingVertical : PALETTE.paddingHorizontal;
         const height = PALETTE.circle + padding * 2;
 
+        const wrap = new Container();
+        wrap.label = "palette";
+
+        const box = new Graphics();
+        box.rect(0, app.screen.height - height, width, height);
+        box.fill("F4F4F4");
+        wrap.addChild(box);
+        
+        const circleSize = PALETTE.circle;
+        const circleCount = Math.floor((width - padding * 4) / (circleSize));
+        const gap = ((width - padding * 2) - (circleCount * circleSize)) / (circleCount - 1);
+
         let index = 0;
-        const items = [];
+        let startX = padding;
+
         for (const [colorCode, colorCount] of this.colors.entries()) {
-            items.push(this.drawColorCircle(colorCode, false, index));
+            if (index < 20 && index < circleCount) {
+                const circle = this.drawColorCircle(colorCode, false, index);
+                circle.x = startX + (gap + circleSize) * index;
+                circle.y = app.screen.height - height + padding;
+
+                if (index === 0) {
+                    circle.label = "colorFirst";
+                } else if (index === 1) {
+                    circle.label = "colorSecond";            
+                }
+                
+                wrap.addChild(circle);
+            }
             index++;
         }
 
-        items[0].name = "colorFirst";
-        items[1].name = "colorSecond";
-
-        const scrollBox = new ScrollBox({
-            width: width,
-            height: height,
-            type: 'horizontal',
-            shiftScroll: true,
-            items: items,
-            padding: padding,
-            elementsMargin: PALETTE.gap,
-            scrollbar: {
-                trackColor: 0x333333,
-                trackAlpha: 0.3,
-                thumbColor: 0x3498db,
-                thumbAlpha: 0.8,
-                size: 8,
-                offset: 5,
-            },
-            background: "F4F4F4",
-        });
-        scrollBox.name = "palette";
-        scrollBox.x = 0;
-        scrollBox.y = app.screen.height - height;
-        app.stage.addChild(scrollBox);
+        app.stage.addChild(wrap);
     }
 
-    findPaletteFirstColor(colorName) {
-        const palette = this.app.stage.children.find(c => c.name === "palette");
+    findPaletteColor(colorName) {
+        const palette = this.app.stage.children.find(c => c.label === "palette");
         const colorsList = palette?.children?.[1] || null;
         if (!colorsList) {
             return null;
         }
 
-        const colorElement = colorsList.children.find(c => c.name === colorName);
+        const colorElement = palette.children.find(c => c.label === colorName);
         return colorElement || null;
     }
 
@@ -456,12 +299,13 @@ export default class Level {
         const app = this.app;
 
         const hand = Sprite.from('hand');
+        this.hand = hand;
 
         const scale = this.levelType === INTERACTIVE_LEVEL ? 0.1 : 0.3;
         const initX = app.screen.width / 2;
         const initY = app.screen.height / 2;
 
-        hand.name = "hand";
+        hand.label = "hand";
         hand.width = hand.width * scale;
         hand.height = hand.height * scale;
         hand.anchor.set(0.5, 0.5);
@@ -470,7 +314,7 @@ export default class Level {
         hand.y = initY;
 
         if (this.levelType === INTERACTIVE_LEVEL) {
-            const firstColor = this.findPaletteFirstColor("colorFirst");
+            const firstColor = this.findPaletteColor("colorFirst");
             
             if (firstColor) {
                 // MARK 1
@@ -479,7 +323,7 @@ export default class Level {
                 hand.anchor.set(0, 0);
             }
         } else {   
-            const text = app.stage.children.find(c => c.name === "text");
+            const text = app.stage.children.find(c => c.label === "text");
 
             if (text) {
                 hand.x = text.x;
@@ -504,18 +348,22 @@ export default class Level {
 
         const app = this.app;
 
-        const tapToClickText = new Text("Tap to Color", {
-            fontSize: this.isVertical ? 54 : 48,
-            fontWeight: 600,
-            fontFamily: FONT_FAMILY,
-            dropShadow: true,
-            dropShadowColor: "white",
-            dropShadowBlur: 14,
-            dropShadowDistance: 0,
-            stroke: "white",
-            strokeThickness: 8,
+        const tapToClickText = new Text({
+            text: "Tap to Color", 
+            style: {
+                fontSize: this.isVertical ? 54 : 48,
+                fontWeight: 600,
+                fontFamily: FONT_FAMILY,
+                dropShadow: true,
+                dropShadowColor: "white",
+                dropShadowBlur: 14,
+                dropShadowDistance: 0,
+                stroke: "white",
+                strokeThickness: 8,
+            },
+            resolution: RESOLUTION.text
         });
-        tapToClickText.name = "text";
+        tapToClickText.label = "text";
         tapToClickText.anchor.set(0.5, 0.5);
         tapToClickText.y = this.isVertical ? 250 : 200;
         tapToClickText.x = app.screen.width / 2;
@@ -524,7 +372,7 @@ export default class Level {
     }
 
     async configureSpecialInteractive() {
-        const firstColor = this.findPaletteFirstColor("colorFirst");
+        const firstColor = this.findPaletteColor("colorFirst");
         if (!firstColor) {
             return;
         }
@@ -535,13 +383,8 @@ export default class Level {
 
             this.selectedColor = firstColor.color;
 
-            const moveHand = (x, y) => {
-                const hand = this.app.stage.children.find((c) => c.name === "hand");
-                if (!hand) {
-                    return;
-                }
-    
-                gsap.to(hand, {
+            const moveHand = async (x, y) => {
+                await gsap.to(this.hand, {
                     x, 
                     y,
                     duration: 1, 
@@ -551,38 +394,39 @@ export default class Level {
                 });
             };
 
-            const pictureWrap = this.app.stage.children.find((c) => c.name === "picture");
-            const picture = pictureWrap?.children?.[1] || null;
+            const pictureWrap = this.app.stage.children.find((c) => c.label === "picture");
+            const textureWrap = (pictureWrap?.children || [])?.find((c) => c.label === "svgWrap") || null;
 
             let fX = 0;
             let fY = 0;
             let fScaleX = 1;
             let fScaleY = 1;
-            let initX = this.firstAreaBox.x;
-            let initY = this.firstAreaBox.y;
-            let initPivotY = picture.pivot.y;
+
+            let initPivotY = textureWrap.pivot.y || 0;
             let ended = false;
             
             const activateInteractiveForArea = async () => {
                 const onClickPicture = async (e) => {
                     const { x, y } = e.data.global;
-                    const difference = 100;
-                    const xPointInArea = x > this.firstAreaBox.x - difference && x < this.firstAreaBox.x + difference;
-                    const yPointInArea = y > this.firstAreaBox.y - difference && y < this.firstAreaBox.y + difference;
+                    const difference = 150;
+
+                    const numf = pictureWrap.children[1].children[1];
+                    const {
+                        tx: numX,
+                        ty: numY
+                    } = numf.worldTransform;
+
+                    const xPointInArea = x > numX - difference && x < numX + difference;
+                    const yPointInArea = y > numY - difference && y < numY + difference;
 
                     const isClickedAreaAndFilled = yPointInArea && xPointInArea;
                     
                     if (isClickedAreaAndFilled) {
-                        picture.off("pointerdown", onClickPicture);
+                        textureWrap.off("pointerdown", onClickPicture);
 
-                        const firstColorAreaElement = this.svgElement.querySelector("[id='firstColor']");
-                        if (firstColorAreaElement) {
-                            firstColorAreaElement.classList.remove("uncolored");
-                        }
+                        textureWrap.children[0].texture = this.coloredTexture;
 
-                        picture.children[0].texture = await createTextureFromHTMLElement(this.svgElement.outerHTML);
-
-                        const secondColor = this.findPaletteFirstColor("colorSecond");
+                        const secondColor = this.findPaletteColor("colorSecond");
                         if (!secondColor) {
                             return;
                         }
@@ -592,10 +436,6 @@ export default class Level {
                         moveHand(x, y);
 
                         const onClickSecondColor = () => {
-                            const areaSecondX = 0;
-                            const areaSecondY = 0;
-                            moveHand(areaSecondX, areaSecondY)
-
                             this.configureDefaultInteractive();
                             secondColor.off("pointerdown", onClickSecondColor);
                         }
@@ -604,44 +444,46 @@ export default class Level {
                     }
                 };
 
-                picture.on("pointerdown", onClickPicture);
+                textureWrap.on("pointerdown", onClickPicture);
             }
 
             const zoomArea = async () => {
-                if (!picture) {
+                if (!textureWrap) {
                     return;
                 }
 
-                picture.interactive = true;
-                let x = picture.scale.x;
-                picture.texture = await createTextureFromHTMLElement(this.svgElement.outerHTML);
-                
-                this.app.ticker.add(async (delta) => {
-                    if (picture.scale.x < 3) {
-                        picture.scale.x += 0.05 * delta;
-                        picture.scale.y += 0.05 * delta;
+                textureWrap.interactive = true;
 
-                        picture.pivot.y += delta * 2;
-                        fY += delta * 2;
-                        fScaleX += 0.05 * delta;
-                        fScaleY += 0.05 * delta;
+                const tickerLogic = async (ticker) => {
+                    console.log("tick");
+                    const delta = ticker.deltaMS * 0.05;
+                    const coeff = 0.05;
+
+                    if (textureWrap.scale.x < 3) {
+                        textureWrap.scale.x += coeff * delta;
+                        textureWrap.scale.y += coeff * delta;
+
+                        textureWrap.pivot.y += delta * 2;
                     } else {
                         if (!ended) {
                             ended = true;
-                            this.firstAreaBox = {
-                                x: this.app.view.offsetLeft + pictureWrap.x + (this.firstAreaBox.x * (0.1 * (fScaleX - 1))),
-                                y: this.app.view.offsetTop + pictureWrap.y + ((this.firstAreaBox.y) * (0.1 * fScaleY)) + picture.pivot.y,
-                            }
+                            removeTickerLogic();
 
-                            console.log(this.app.view.offsetTop, pictureWrap.y, picture.pivot.y);
-                            const areaFirstX = this.firstAreaBox.x;
-                            const areaFirstY = this.firstAreaBox.y;
-                            moveHand(areaFirstX, areaFirstY);
+                            
+                            const numf = pictureWrap.children[1].children[1];
+                            await moveHand(numf.worldTransform.tx, numf.worldTransform.ty);
+
+                            // TODO: optimize again this...
                             await activateInteractiveForArea();
                         }
-                        picture.ticker?.remove(this);
                     }
-                });
+                }
+
+                const removeTickerLogic = () => {
+                    this.app.ticker.remove(tickerLogic);
+                }
+                
+                this.app.ticker.add(tickerLogic);
             }
 
             await zoomArea();
@@ -674,20 +516,37 @@ export default class Level {
 
     async startGame() {
         const app = this.app;
+        let startData = new Date().getMilliseconds(); 
         console.log('%c  %c LevelScene ', 'background:#219039','color: #219039; background: #000; font-size:10pt')
 
-        await this.formatPictureToElement();
-        this.initColors();
+        startData = new Date().getMilliseconds() - startData;
+        console.log(2, startData);
         this.initSelectedColor();
-        await this.drawInitPicture();
+        startData = new Date().getMilliseconds() - startData;
+        console.log(3, startData);
+        this.drawPicture();
+        startData = new Date().getMilliseconds() - startData;
+        console.log(4, startData);
         this.drawNumbersInAreas();
+        startData = new Date().getMilliseconds() - startData;
+        console.log(5, startData);
         this.drawPalette();
+        startData = new Date().getMilliseconds() - startData;
+        console.log(6, startData);
 
         this.drawText();
         setTimeout(() => {
             this.drawHand();
         }, 0);
 
+
+        const firstColorAreaElement = this.svgElement.querySelector("[id='firstColor']");
+        if (firstColorAreaElement) {
+            firstColorAreaElement.classList.remove("uncolored");
+        }
+        const coloredTexture = await new LevelTexture().createTextureFromHTMLElement(this.svgElement.outerHTML);
+        this.coloredTexture = coloredTexture;
+        
         await this.configureInteractive();
     }
 }
