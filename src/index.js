@@ -44,7 +44,7 @@ const initApplication = async () => {
     STATE.currentPage = game;
     await game.startGame();
 
-    const resize = () => {
+    const resize = async () => {
         const isLandscape = window.innerWidth > window.innerHeight;
         const size = isLandscape ? horizontalSize : verticalSize;
         const ratio = size[0] / size[1];
@@ -53,7 +53,7 @@ const initApplication = async () => {
         const isHeightChanged = app.renderer.height !== size[1];
         if (isWidthChanged || isHeightChanged) {
             app.renderer.resize(size[0], size[1]);
-            STATE.currentPage.handleResize?.(isLandscape);
+            await STATE.currentPage.handleResize?.(isLandscape);
         }
         
         const isScreenWidthWiderThanApp = window.innerWidth / window.innerHeight >= ratio;
@@ -76,8 +76,8 @@ const initApplication = async () => {
         }
     }
 
-    window.addEventListener('orientationchange', () => {
-        setTimeout(resize, 300);
+    window.addEventListener('orientationchange', async () => {
+        setTimeout(await resize, 300);
     });
 
     window.addEventListener('resize', resize);

@@ -63,8 +63,6 @@ export default class Preloader {
             'coverA', 'coverB', 'coverC', 'coverD',
             'labelA', 'labelB', 'labelC', 'labelD'
         ]);
-        
-        console.log('✅ PNG загружены');
     }
 
     async loadSVG() {

@@ -26,8 +26,17 @@ export default class Level {
         this.texture = texture;
     }
 
-    handleResize(isLandscape) {
+    async handleResize(isLandscape) {
         if (this.app) {
+            if (this.isVertical !== !isLandscape) {
+                const size = !isLandscape ? this.app.screen.width - 100 : this.app.screen.height - 200;
+                
+                const levelTextureData = new LevelTexture();
+                PRELOADED_LEVELS[this.levelType] = await levelTextureData.init(this.app, this.levelType, size);
+
+                this.svgElement = PRELOADED_LEVELS[this.levelType].svgElement;
+                this.texture = PRELOADED_LEVELS[this.levelType].texture;
+            }
             this.isVertical = !isLandscape;
             this.app.stage.removeChildren();
             this.startGame();
@@ -489,9 +498,7 @@ export default class Level {
     }
 
     configureDefaultInteractive() {
-        this.app.stage.eventMode = 'static';
-        this.app.stage.hitArea = this.app.screen;
-        this.app.stage.on("pointerdown", (e) => {
+        const onClick = (e) => {
             if (typeof window?.FbPlayableAd !== 'undefined' && typeof window?.FbPlayableAd.onCTAClick === 'function') {
                 window.FbPlayableAd.onCTAClick();
             } else if (typeof window?.ExitApi !== 'undefined' && typeof window?.ExitApi.exit === 'function') {
@@ -499,10 +506,17 @@ export default class Level {
             } else {
                 alert('Download the game in App Store / Google Play!');
             }
-        })
+        }
+
+        this.app.stage.eventMode = 'static';
+        this.app.stage.hitArea = this.app.screen;
+
+        this.app.stage.on("pointerdown", onClick);
     }
 
     async configureInteractive() {
+        this.app.stage.off("pointerdown");
+
         if (this.levelType === INTERACTIVE_LEVEL) {
             await this.configureSpecialInteractive();
         } else {
