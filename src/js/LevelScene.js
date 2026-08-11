@@ -308,6 +308,7 @@ export default class Level {
 
         const hand = Sprite.from('hand');
         this.hand = hand;
+        hand.eventMode = 'pass-through'
 
         const scale = this.levelType === INTERACTIVE_LEVEL ? 0.1 : 0.3;
         const initX = app.screen.width / 2;
