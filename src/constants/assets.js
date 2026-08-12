@@ -1,14 +1,25 @@
-import { MIPMAP_MODES, SCALE_MODES } from "pixi.js";
+import { MIPMAP_MODES } from "pixi.js";
 
-const RESOLUTION = 2;
+export const FRAME_PADDING = 26;
 
-export const SETTINGS_BASE_TEXTURE = {
+export const RESOLUTION = {
+    text: 2,
+    img: 8,
+    svg: 1,
+}
+
+const SCALE_MODES = {
+    LINEAR: "linear",
+    NEAREST: "nearest",
+};
+
+export const SETTINGS_PNG_RESOURCE = {
     scaleMode: SCALE_MODES.LINEAR,
-    resolution: RESOLUTION,
-    mipmap: MIPMAP_MODES.ON,
+    autoGenerateMipmaps: true,
+    antialias: true,
 }
 
 export const SETTINGS_SVG_RESOURCE = {
-    scale: RESOLUTION,
-    autoLoad: true,
+    resolution: RESOLUTION.svg,
+    parseAsGraphicsContext: true,
 }

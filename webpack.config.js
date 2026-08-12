@@ -7,7 +7,8 @@ module.exports = {
   output: {
     filename: "bundle.min.js",
     path: path.resolve(__dirname, 'dist/'),
-    clean: true
+    clean: true,
+    publicPath: "",
   },
   module: {
     rules: [
@@ -36,5 +37,5 @@ module.exports = {
       template: "./src/index.html",
       inject: 'body'
     }),
-  ]
+  ],
 };
