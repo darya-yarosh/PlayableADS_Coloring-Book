@@ -1,7 +1,6 @@
 const path = require('path');
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
@@ -38,10 +37,5 @@ module.exports = {
       template: "./src/index.html",
       inject: 'body'
     }),
-    new HtmlInlineScriptPlugin()
   ],
-  optimization: {
-    splitChunks: false,
-    runtimeChunk: false,
-  }
 };
