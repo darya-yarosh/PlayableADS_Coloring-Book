@@ -1,4 +1,4 @@
-import { Assets } from 'pixi.js';
+const { Assets } = PIXI;
 
 // PNG
 import hand from "../img/interface/Hand.png";

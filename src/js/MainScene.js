@@ -1,4 +1,4 @@
-import { Assets, Container, Graphics, GraphicsContext, Sprite, Text, Texture } from 'pixi.js';
+const { Assets, Container, Graphics, GraphicsContext, Sprite, Text, Texture } = PIXI;
 
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";

@@ -1,4 +1,5 @@
-import { Assets, BaseTexture, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+const { Assets, BaseTexture, Container, Graphics, Sprite, Text, Texture } = PIXI;
+
 import { gsap } from "gsap";
 
 import { FONT_FAMILY } from '../constants/font';

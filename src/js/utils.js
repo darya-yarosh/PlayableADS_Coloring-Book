@@ -1,4 +1,4 @@
-import { Texture, ImageSource, CanvasSource, Assets  } from "pixi.js";
+const { Texture, ImageSource, CanvasSource, Assets  } = PIXI;
 
 import { STATE } from "..";
 

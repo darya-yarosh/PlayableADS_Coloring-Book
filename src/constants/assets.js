@@ -1,4 +1,4 @@
-import { MIPMAP_MODES } from "pixi.js";
+const { MIPMAP_MODES } = PIXI;
 
 export const FRAME_PADDING = 26;
 

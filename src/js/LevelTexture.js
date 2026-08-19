@@ -1,4 +1,4 @@
-import { Assets } from "pixi.js";
+const { Assets } = PIXI;
 
 import { COLORS } from "../constants/levels";
 

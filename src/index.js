@@ -1,4 +1,5 @@
-import { Application, extensions, SCALE_MODES, TickerPlugin } from 'pixi.js';
+const { Application, extensions, SCALE_MODES, TickerPlugin } = PIXI;
+
 import { gsap } from "gsap";
 import { PixiPlugin } from "gsap/PixiPlugin";
 
